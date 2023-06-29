@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">WODerful</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="hello_world">From the Square world,\nHello, %1$s!</string>
+    <string name="tile_label">Example tile</string>
+    <string name="title_activity_presentation._main">presentation.MainActivity</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="complication_label">Example complication</string>
+
+    <string translatable="false" name="amrap">AMRAP</string>
+    <string translatable="false" name="emom">EMOM</string>
+    <string translatable="false" name="tabata">Tabata</string>
+    <string translatable="false" name="for_time">For Time</string>
+    <string name="title_how_long">How long?</string>
+    <string name="title_heart_monitor">Heart monitor</string>
+    <string name="title_not_available">Not available</string>
+    <string name="title_no_hr_reading">--</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_increase_rounds">Tap once to increase rounds</string>
+    <string name="action_decrease_rounds">Tap twice to decrease rounds</string>
+    <string name="title_instructions">Instructions</string>
+    <string name="title_you_are_all_set">You are all set!</string>
+    <string name="action_lets_start">Let\'s start</string>
+</resources>

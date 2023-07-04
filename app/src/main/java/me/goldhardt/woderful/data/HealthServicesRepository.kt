@@ -21,7 +21,6 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.health.services.client.data.LocationAvailability
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
@@ -48,13 +47,11 @@ class HealthServicesRepository @Inject constructor(
     suspend fun isTrackingExerciseInAnotherApp() =
         exerciseClientManager.isTrackingExerciseInAnotherApp()
 
-
     fun prepareExercise() = exerciseService?.prepareExercise()
     fun startExercise() = exerciseService?.startExercise()
     fun pauseExercise() = exerciseService?.pauseExercise()
     fun endExercise() = exerciseService?.endExercise()
     fun resumeExercise() = exerciseService?.resumeExercise()
-
     fun markLap() = exerciseService?.markLap()
 
     var bound = mutableStateOf(false)
@@ -68,7 +65,6 @@ class HealthServicesRepository @Inject constructor(
                 exerciseService = it
                 serviceState.value = ServiceState.Connected(
                     exerciseServiceState = it.exerciseServiceState,
-                    locationAvailabilityState = it.locationAvailabilityState,
                     activeDurationUpdate = it.exerciseServiceState.value.exerciseDurationUpdate,
                 )
             }
@@ -98,7 +94,6 @@ sealed class ServiceState {
     object Disconnected : ServiceState()
     data class Connected(
         val exerciseServiceState: StateFlow<ForegroundService.ExerciseServiceState>,
-        val locationAvailabilityState: StateFlow<LocationAvailability>,
         val activeDurationUpdate: ActiveDurationUpdate?,
     ) : ServiceState()
 }

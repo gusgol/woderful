@@ -52,7 +52,7 @@ class ExerciseClientManager @Inject constructor(
         if (!capabilitiesLoaded) {
             if (ExerciseType.WORKOUT in capabilities.supportedExerciseTypes) {
                 exerciseCapabilities =
-                    capabilities.getExerciseTypeCapabilities(ExerciseType.RUNNING)
+                    capabilities.getExerciseTypeCapabilities(ExerciseType.WORKOUT)
             }
         }
         return exerciseCapabilities
@@ -66,16 +66,10 @@ class ExerciseClientManager @Inject constructor(
     suspend fun isTrackingExerciseInAnotherApp(): Boolean {
         val exerciseInfo = exerciseClient.getCurrentExerciseInfoAsync().await()
         return exerciseInfo.exerciseTrackedStatus == ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS
-
     }
 
     private fun supportsCalorieGoal(capabilities: ExerciseTypeCapabilities): Boolean {
         val supported = capabilities.supportedGoals[DataType.CALORIES_TOTAL]
-        return supported != null && ComparisonType.GREATER_THAN_OR_EQUAL in supported
-    }
-
-    private fun supportsDistanceMilestone(capabilities: ExerciseTypeCapabilities): Boolean {
-        val supported = capabilities.supportedMilestones[DataType.DISTANCE_TOTAL]
         return supported != null && ComparisonType.GREATER_THAN_OR_EQUAL in supported
     }
 
@@ -105,7 +99,7 @@ class ExerciseClientManager @Inject constructor(
             exerciseType = ExerciseType.WORKOUT,
             dataTypes = dataTypes,
             isAutoPauseAndResumeEnabled = false,
-            isGpsEnabled = true,
+            isGpsEnabled = false,
             exerciseGoals = exerciseGoals
         )
         exerciseClient.startExerciseAsync(config).await()
@@ -139,8 +133,6 @@ class ExerciseClientManager @Inject constructor(
         exerciseClient.resumeExerciseAsync().await()
     }
 
-    /** Wear OS 3.0 reserves two buttons for the OS. For devices with more than 2 buttons,
-     * consider implementing a "press" to mark lap feature**/
     suspend fun markLap() {
         if (isExerciseInProgress()) {
             exerciseClient.markLapAsync().await()
@@ -190,12 +182,9 @@ class ExerciseClientManager @Inject constructor(
         }
     }
 
-
     private companion object {
         const val CALORIES_THRESHOLD = 250.0
-        const val DISTANCE_THRESHOLD = 1_000.0 // meters
         const val OUTPUT = "Output"
-
     }
 }
 

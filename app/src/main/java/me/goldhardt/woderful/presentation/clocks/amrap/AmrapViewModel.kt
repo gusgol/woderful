@@ -22,7 +22,6 @@ class AmrapViewModel @Inject constructor(
 
     val permissions = arrayOf(
         Manifest.permission.BODY_SENSORS,
-        Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACTIVITY_RECOGNITION
     )
 
@@ -58,7 +57,6 @@ class AmrapViewModel @Inject constructor(
     fun pauseExercise() = viewModelScope.launch { healthServicesRepository.pauseExercise() }
     fun endExercise() = viewModelScope.launch { healthServicesRepository.endExercise() }
     fun resumeExercise() = viewModelScope.launch { healthServicesRepository.resumeExercise() }
-
     fun markLap() = viewModelScope.launch { healthServicesRepository.markLap() }
 }
 

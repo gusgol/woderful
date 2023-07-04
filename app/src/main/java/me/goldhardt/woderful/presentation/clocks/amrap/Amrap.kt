@@ -18,12 +18,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Divider
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.HeartBroken
-import androidx.compose.material.icons.filled.MonitorHeart
-import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,29 +29,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.health.services.client.data.Availability
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
-import androidx.health.services.client.data.DataTypeAvailability
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.horologist.composables.ExperimentalHorologistComposablesApi
 import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
-import me.goldhardt.woderful.R
-import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
-import me.goldhardt.woderful.presentation.theme.WODerfulTheme
-import me.goldhardt.woderful.presentation.component.CircleContainer
-import me.goldhardt.woderful.presentation.component.RoundsCounter
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
-
-
-const val PERMISSION = android.Manifest.permission.BODY_SENSORS
+import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
+import me.goldhardt.woderful.presentation.component.HeartRateMonitor
+import me.goldhardt.woderful.presentation.component.RoundsCounter
+import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
 enum class AmrapFlow {
     TIME_CONFIG,
@@ -137,223 +123,6 @@ fun AmrapScreen(
         }
     }
 
-}
-
-@ExperimentalPermissionsApi
-@Composable
-fun AmrapConfiguration(
-    permissions: Array<String>,
-    onConfirm: (Int) -> Unit = {}
-) {
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        if (result.all { it.value }) {
-            Log.d(ContentValues.TAG, "All required permissions granted")
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        launch {
-            permissionLauncher.launch(permissions)
-        }
-    }
-
-    TimeConfiguration(
-        title = stringResource(id = R.string.title_how_long),
-        onConfirm = onConfirm
-    )
-}
-
-@OptIn(ExperimentalHorologistComposablesApi::class)
-@Composable
-fun AmrapClock(
-    timeMin: Int,
-    exerciseMetrics: DataPointContainer? = null,
-    onMinuteChange: () -> Unit = {},
-    onFinished: () -> Unit = {},
-) {
-    val segments = mutableListOf<ProgressIndicatorSegment>()
-    repeat(timeMin) {
-        segments.add(
-            ProgressIndicatorSegment(
-                weight = 1f,
-                indicatorColor = MaterialTheme.colors.primary,
-                trackColor = MaterialTheme.colors.secondary.copy(alpha = 0.1f)
-            )
-        )
-    }
-
-    val totalMs = timeMin * 60 * 1000L
-    var remainingMillis by remember { mutableStateOf(-1L) }
-
-    var progress by remember { mutableStateOf(0f) }
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-    )
-
-    val countDownTimer: CountDownTimer = object : CountDownTimer(
-        totalMs,
-        1000
-    ) {
-        override fun onTick(millisUntilFinished: Long) {
-            remainingMillis = millisUntilFinished
-            progress = 1f - (millisUntilFinished.toFloat() / totalMs.toFloat())
-        }
-
-        override fun onFinish() {
-            onFinished()
-        }
-    }
-
-    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        LocalContext.current.getSystemService(Context.VIBRATOR_SERVICE)
-                as Vibrator
-    }
-
-    var roundCount by remember { mutableStateOf(0) }
-
-    val tempHeartRate = remember { mutableStateOf(0.0) }
-    if (exerciseMetrics?.getData(DataType.HEART_RATE_BPM)
-            ?.isNotEmpty() == true
-    ) tempHeartRate.value =
-        exerciseMetrics?.getData(DataType.HEART_RATE_BPM)
-            ?.last()?.value!!
-    else tempHeartRate.value = tempHeartRate.value
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        roundCount++
-                    },
-                    onDoubleTap = {
-                        if (roundCount > 0) {
-                            roundCount--
-                        }
-                    }
-                )
-            }
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        SegmentedProgressIndicator(
-            trackSegments = segments,
-            progress = animatedProgress,
-            paddingAngle = 2f,
-            strokeWidth = 8.dp,
-        )
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = "Time",
-                color = MaterialTheme.colors.primary,
-                style = MaterialTheme.typography.caption1
-            )
-            Text(
-                text = getRemainingTime(remainingMillis) {
-                    val vibrationEffect1: VibrationEffect =
-                        VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                    vibrator.cancel()
-                    vibrator.vibrate(vibrationEffect1)
-                    onMinuteChange()
-                },
-                style = MaterialTheme.typography.display1
-            )
-            Row(horizontalArrangement = Arrangement.Center) {
-                HeartRateMonitor(hr = tempHeartRate.value)
-                Spacer(modifier = Modifier.width(16.dp))
-                RoundsCounter(roundCount)
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        countDownTimer.start()
-    }
-}
-
-@Composable
-fun AmrapFinished() {
-    Box(
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = "Workout finished!")
-    }
-}
-
-private fun getRemainingTime(
-    millis: Long,
-    onMinuteChange: () -> Unit = {}
-): String {
-    val minutes: Long = millis / 1000 / 60
-    val seconds: Long = millis / 1000 % 60
-    if (seconds == 0L) {
-        onMinuteChange()
-    }
-    return "%02d:%02d".format(minutes, seconds)
-}
-
-@Preview(
-    device = Devices.WEAR_OS_SMALL_ROUND,
-    showSystemUi = true,
-    backgroundColor = 0xff000000,
-    showBackground = true
-)
-@Composable
-fun AmrapClockPreview() {
-    WODerfulTheme {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .height(IntrinsicSize.Min)
-
-            ) {
-                Text(
-                    text = "Rounds",
-                    style = MaterialTheme.typography.caption3
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Divider(
-                    color = MaterialTheme.colors.onSurfaceVariant.copy(
-                        alpha = 0.4F
-                    ),
-                    modifier = Modifier
-                        .height(8.dp)
-                        .width(1.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "4",
-                    style = MaterialTheme.typography.caption3
-                )
-            }
-            Text(
-                text = "09:32",
-                style = MaterialTheme.typography.display1,
-                modifier = Modifier.padding(0.dp)
-            )
-        }
-    }
-}
-
-internal enum class AmrapInstructionsStep {
-    TAP,
-    DOUBLE_TAP,
-    DONE,
 }
 
 @Composable
@@ -450,44 +219,183 @@ fun AmrapInstructions(
     }
 }
 
+@ExperimentalPermissionsApi
 @Composable
-fun HeartRateMonitor(
-    hr: Double = 0.0,
-    availability: DataTypeAvailability = DataTypeAvailability.AVAILABLE,
+fun AmrapConfiguration(
+    permissions: Array<String>,
+    onConfirm: (Int) -> Unit = {}
 ) {
-    val icon = when (availability) {
-        DataTypeAvailability.AVAILABLE -> Icons.Default.Favorite
-        DataTypeAvailability.ACQUIRING -> Icons.Default.MonitorHeart
-        DataTypeAvailability.UNAVAILABLE,
-        DataTypeAvailability.UNAVAILABLE_DEVICE_OFF_BODY -> Icons.Default.HeartBroken
-        else -> Icons.Default.QuestionMark
-    }
-    val text = if (availability == DataTypeAvailability.AVAILABLE) {
-        hr.toInt().toString()
-    } else {
-        stringResource(id = R.string.title_no_hr_reading)
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        if (result.all { it.value }) {
+            Log.d(ContentValues.TAG, "All required permissions granted")
+        }
     }
 
-    CircleContainer(
-        minimumRadius = 24.dp,
+    LaunchedEffect(Unit) {
+        launch {
+            permissionLauncher.launch(permissions)
+        }
+    }
+
+    TimeConfiguration(
+        title = stringResource(id = R.string.title_how_long),
+        onConfirm = onConfirm
+    )
+}
+
+@OptIn(ExperimentalHorologistComposablesApi::class)
+@Composable
+fun AmrapClock(
+    timeMin: Int,
+    exerciseMetrics: DataPointContainer? = null,
+    onMinuteChange: () -> Unit = {},
+    onFinished: () -> Unit = {},
+) {
+    val segments = mutableListOf<ProgressIndicatorSegment>()
+    repeat(timeMin) {
+        segments.add(
+            ProgressIndicatorSegment(
+                weight = 1f,
+                indicatorColor = MaterialTheme.colors.primary,
+                trackColor = MaterialTheme.colors.secondary.copy(alpha = 0.1f)
+            )
+        )
+    }
+
+    val totalMs = timeMin * 60 * 1000L
+    var remainingMillis by remember { mutableStateOf(-1L) }
+
+    var progress by remember { mutableStateOf(0f) }
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+    )
+
+    val countDownTimer: CountDownTimer = object : CountDownTimer(
+        totalMs,
+        1000
     ) {
+        override fun onTick(millisUntilFinished: Long) {
+            remainingMillis = millisUntilFinished
+            progress = 1f - (millisUntilFinished.toFloat() / totalMs.toFloat())
+        }
+
+        override fun onFinish() {
+            onFinished()
+        }
+    }
+
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        LocalContext.current.getSystemService(Context.VIBRATOR_SERVICE)
+                as Vibrator
+    }
+
+    var roundCount by remember { mutableStateOf(0) }
+
+    val tempHeartRate = remember { mutableStateOf(0.0) }
+    if (exerciseMetrics?.getData(DataType.HEART_RATE_BPM)?.isNotEmpty() == true) {
+        tempHeartRate.value =
+            exerciseMetrics.getData(DataType.HEART_RATE_BPM)
+                .last().value
+    } else {
+        tempHeartRate.value = tempHeartRate.value
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        roundCount++
+                    },
+                    onDoubleTap = {
+                        if (roundCount > 0) {
+                            roundCount--
+                        }
+                    }
+                )
+            }
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        SegmentedProgressIndicator(
+            trackSegments = segments,
+            progress = animatedProgress,
+            paddingAngle = 2f,
+            strokeWidth = 8.dp,
+        )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(12.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription =  stringResource(R.string.action_confirm),
-                tint = MaterialTheme.colors.primary,
-                modifier = Modifier
-                    .size(8.dp)
-                    .wrapContentSize(align = Alignment.Center)
+            Text(
+                text = "Time",
+                color = MaterialTheme.colors.primary,
+                style = MaterialTheme.typography.caption1
             )
             Text(
-                text = text,
-                style = MaterialTheme.typography.title1
+                text = getRemainingTime(remainingMillis) {
+                    val vibrationEffect1: VibrationEffect =
+                        VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+                    vibrator.cancel()
+                    vibrator.vibrate(vibrationEffect1)
+                    onMinuteChange()
+                },
+                style = MaterialTheme.typography.display1
             )
+            Row(horizontalArrangement = Arrangement.Center) {
+                HeartRateMonitor(hr = tempHeartRate.value)
+                Spacer(modifier = Modifier.width(16.dp))
+                RoundsCounter(roundCount)
+            }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        countDownTimer.start()
+    }
+}
+
+@Composable
+fun AmrapFinished() {
+    Box(
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = "Workout finished!")
+    }
+}
+internal enum class AmrapInstructionsStep {
+    TAP,
+    DOUBLE_TAP,
+    DONE,
+}
+private fun getRemainingTime(
+    millis: Long,
+    onMinuteChange: () -> Unit = {}
+): String {
+    val minutes: Long = millis / 1000 / 60
+    val seconds: Long = millis / 1000 % 60
+    if (seconds == 0L) {
+        onMinuteChange()
+    }
+    return "%02d:%02d".format(minutes, seconds)
+}
+
+@Preview(
+    device = Devices.WEAR_OS_SMALL_ROUND,
+    showSystemUi = true,
+    backgroundColor = 0xff000000,
+    showBackground = true
+)
+@Composable
+fun AmrapClockPreview() {
+    WODerfulTheme {
+        AmrapClock(timeMin = 12)
     }
 }
 

@@ -24,4 +24,5 @@
     <string name="title_instructions">Instructions</string>
     <string name="title_you_are_all_set">You are all set!</string>
     <string name="action_lets_start">Let\'s start</string>
+    <string name="title_loading">Loading...</string>
 </resources>

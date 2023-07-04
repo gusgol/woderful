@@ -1,63 +1,68 @@
 package me.goldhardt.woderful.presentation.clocks.amrap
 
+import android.Manifest
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.health.services.client.data.DataTypeAvailability
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
-import me.goldhardt.woderful.data.MeasureMessage
+import me.goldhardt.woderful.data.ServiceState
 import javax.inject.Inject
+
 
 @HiltViewModel
 class AmrapViewModel @Inject constructor(
     private val healthServicesRepository: HealthServicesRepository
 ) : ViewModel() {
 
-    val enabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val permissions = arrayOf(
+        Manifest.permission.BODY_SENSORS,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACTIVITY_RECOGNITION
+    )
 
-    val hr: MutableState<Double> = mutableDoubleStateOf(0.0)
-    val availability: MutableState<DataTypeAvailability> =
-        mutableStateOf(DataTypeAvailability.UNKNOWN)
+    val uiState: StateFlow<ExerciseUiState> = flow {
+        emit(
+            ExerciseUiState(
+                hasExerciseCapabilities = healthServicesRepository.hasExerciseCapability(),
+                isTrackingAnotherExercise = healthServicesRepository.isTrackingExerciseInAnotherApp(),
+            )
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(3_000),
+        ExerciseUiState()
+    )
 
-    val hearRateSupported: MutableState<Boolean> = mutableStateOf(false)
+    private var _exerciseServiceState: MutableState<ServiceState> =
+        healthServicesRepository.serviceState
+    val exerciseServiceState = _exerciseServiceState
 
     init {
         viewModelScope.launch {
-            hearRateSupported.value = healthServicesRepository.hasHeartRateCapability()
-        }
-
-        viewModelScope.launch {
-            enabled.collect {
-                if (it) {
-                    healthServicesRepository.heartRateMeasureFlow()
-                        .takeWhile { enabled.value }
-                        .collect { measureMessage ->
-                            when (measureMessage) {
-                                is MeasureMessage.MeasureData -> {
-                                    hr.value = measureMessage.data.last().value
-                                }
-                                is MeasureMessage.MeasureAvailability -> {
-                                    availability.value = measureMessage.availability
-                                }
-                            }
-                        }
-                }
-            }
+            healthServicesRepository.createService()
         }
     }
 
-    fun enableHeartRateMeasurement() {
-        enabled.value = true
+    suspend fun isExerciseInProgress(): Boolean {
+        return healthServicesRepository.isExerciseInProgress()
     }
 
-    fun disableHeartRateMeasurement() {
-        enabled.value = false
-        availability.value = DataTypeAvailability.UNKNOWN
-    }
+    fun prepareExercise() = viewModelScope.launch { healthServicesRepository.prepareExercise() }
+    fun startExercise() = viewModelScope.launch { healthServicesRepository.startExercise() }
+    fun pauseExercise() = viewModelScope.launch { healthServicesRepository.pauseExercise() }
+    fun endExercise() = viewModelScope.launch { healthServicesRepository.endExercise() }
+    fun resumeExercise() = viewModelScope.launch { healthServicesRepository.resumeExercise() }
+
+    fun markLap() = viewModelScope.launch { healthServicesRepository.markLap() }
 }
+
+data class ExerciseUiState(
+    val hasExerciseCapabilities: Boolean = true,
+    val isTrackingAnotherExercise: Boolean = false,
+)

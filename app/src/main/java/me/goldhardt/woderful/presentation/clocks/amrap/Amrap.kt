@@ -1,11 +1,15 @@
 package me.goldhardt.woderful.presentation.clocks.amrap
 
+import android.content.ContentValues
 import android.content.Context
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -31,6 +35,8 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.health.services.client.data.Availability
+import androidx.health.services.client.data.DataPointContainer
+import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.DataTypeAvailability
 import androidx.wear.compose.material.*
 import com.google.android.horologist.composables.ExperimentalHorologistComposablesApi
@@ -46,6 +52,8 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.launch
+import me.goldhardt.woderful.data.ServiceState
 
 
 const val PERMISSION = android.Manifest.permission.BODY_SENSORS
@@ -64,83 +72,103 @@ const val DEFAULT_AMRAP_TIME = 10
 fun AmrapScreen(
     viewModel: AmrapViewModel = hiltViewModel()
 ) {
-    val enabled by viewModel.enabled.collectAsState()
-    val hr by viewModel.hr
-    val availability by viewModel.availability
-    val hrSupported by viewModel.hearRateSupported
+
+    val serviceState by viewModel.exerciseServiceState
 
     var step by remember { mutableStateOf(AmrapFlow.TIME_CONFIG) }
     var time by remember { mutableIntStateOf(DEFAULT_AMRAP_TIME) }
 
-    val permissionState = rememberPermissionState(
-        permission = PERMISSION,
-        onPermissionResult = {}
-    )
+    when (serviceState) {
+        is ServiceState.Connected -> {
 
-    when (step) {
-        AmrapFlow.TIME_CONFIG -> {
-            AmrapConfiguration(
-                heartRateSupported = hrSupported,
-                permissionState = permissionState,
-                onConfirm = { selectedTime ->
-                    time = selectedTime
-                    step = AmrapFlow.INSTRUCTIONS
+            val getExerciseServiceState by (serviceState as ServiceState.Connected).exerciseServiceState.collectAsState()
+            val exerciseMetrics by mutableStateOf(getExerciseServiceState.exerciseMetrics)
+
+            LaunchedEffect(Unit) {
+                viewModel.prepareExercise()
+            }
+
+            when (step) {
+                AmrapFlow.TIME_CONFIG -> {
+                    AmrapConfiguration(
+                        viewModel.permissions,
+                        onConfirm = { selectedTime ->
+                            time = selectedTime
+                            step = AmrapFlow.INSTRUCTIONS
+                        }
+                    )
                 }
-            )
-        }
-        AmrapFlow.INSTRUCTIONS -> {
-            AmrapInstructions {
-                viewModel.enableHeartRateMeasurement()
-                step = AmrapFlow.CLOCK
+                AmrapFlow.INSTRUCTIONS -> {
+                    AmrapInstructions {
+                        viewModel.startExercise()
+                        step = AmrapFlow.CLOCK
+                    }
+                }
+                AmrapFlow.CLOCK -> {
+                    AmrapClock(
+                        timeMin = time,
+                        exerciseMetrics = exerciseMetrics,
+                        onMinuteChange = {
+                            viewModel.markLap()
+                        }
+                    ) {
+                        viewModel.endExercise()
+                        step = AmrapFlow.RESULT
+                    }
+                }
+                AmrapFlow.RESULT -> {
+                    AmrapFinished()
+                }
             }
         }
-        AmrapFlow.CLOCK -> {
-            AmrapClock(
-                time, hrSupported, hr, availability,
+
+        ServiceState.Disconnected -> {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
             ) {
-                viewModel.disableHeartRateMeasurement()
-                step = AmrapFlow.RESULT
+                Text(
+                    text = stringResource(R.string.title_loading),
+                    style = MaterialTheme.typography.body1
+                )
             }
-        }
-        AmrapFlow.RESULT -> {
-            AmrapFinished()
         }
     }
+
 }
 
 @ExperimentalPermissionsApi
 @Composable
 fun AmrapConfiguration(
-    heartRateSupported: Boolean,
-    permissionState: PermissionState,
+    permissions: Array<String>,
     onConfirm: (Int) -> Unit = {}
 ) {
-    if (!heartRateSupported) {
-        TimeConfiguration(
-            title = stringResource(id = R.string.title_how_long),
-            onConfirm = onConfirm
-        )
-    } else {
-        if (permissionState.status.isGranted) {
-            TimeConfiguration(
-                title = stringResource(id = R.string.title_how_long),
-                onConfirm = onConfirm
-            )
-        } else {
-            LaunchedEffect(Unit) {
-                permissionState.launchPermissionRequest()
-            }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        if (result.all { it.value }) {
+            Log.d(ContentValues.TAG, "All required permissions granted")
         }
     }
+
+    LaunchedEffect(Unit) {
+        launch {
+            permissionLauncher.launch(permissions)
+        }
+    }
+
+    TimeConfiguration(
+        title = stringResource(id = R.string.title_how_long),
+        onConfirm = onConfirm
+    )
 }
 
 @OptIn(ExperimentalHorologistComposablesApi::class)
 @Composable
 fun AmrapClock(
     timeMin: Int,
-    heartRateSupported: Boolean,
-    hr: Double,
-    availability: DataTypeAvailability,
+    exerciseMetrics: DataPointContainer? = null,
+    onMinuteChange: () -> Unit = {},
     onFinished: () -> Unit = {},
 ) {
     val segments = mutableListOf<ProgressIndicatorSegment>()
@@ -187,6 +215,14 @@ fun AmrapClock(
 
     var roundCount by remember { mutableStateOf(0) }
 
+    val tempHeartRate = remember { mutableStateOf(0.0) }
+    if (exerciseMetrics?.getData(DataType.HEART_RATE_BPM)
+            ?.isNotEmpty() == true
+    ) tempHeartRate.value =
+        exerciseMetrics?.getData(DataType.HEART_RATE_BPM)
+            ?.last()?.value!!
+    else tempHeartRate.value = tempHeartRate.value
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -225,14 +261,13 @@ fun AmrapClock(
                         VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
                     vibrator.cancel()
                     vibrator.vibrate(vibrationEffect1)
+                    onMinuteChange()
                 },
                 style = MaterialTheme.typography.display1
             )
             Row(horizontalArrangement = Arrangement.Center) {
-                if (heartRateSupported) {
-                    HeartRateMonitor(hr, availability)
-                    Spacer(modifier = Modifier.width(16.dp))
-                }
+                HeartRateMonitor(hr = tempHeartRate.value)
+                Spacer(modifier = Modifier.width(16.dp))
                 RoundsCounter(roundCount)
             }
         }
@@ -415,8 +450,8 @@ fun AmrapInstructions(
 
 @Composable
 fun HeartRateMonitor(
-    hr: Double,
-    availability: DataTypeAvailability,
+    hr: Double = 0.0,
+    availability: DataTypeAvailability = DataTypeAvailability.AVAILABLE,
 ) {
     val icon = when (availability) {
         DataTypeAvailability.AVAILABLE -> Icons.Default.Favorite

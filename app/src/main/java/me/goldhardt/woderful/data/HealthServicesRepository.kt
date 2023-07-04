@@ -1,80 +1,110 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package me.goldhardt.woderful.data
 
+import android.content.ComponentName
 import android.content.Context
-import android.util.Log
-import androidx.concurrent.futures.await
-import androidx.health.services.client.HealthServices
-import androidx.health.services.client.MeasureCallback
-import androidx.health.services.client.data.Availability
-import androidx.health.services.client.data.DataPointContainer
-import androidx.health.services.client.data.DataType
-import androidx.health.services.client.data.DataTypeAvailability
-import androidx.health.services.client.data.DeltaDataType
-import androidx.health.services.client.data.SampleDataPoint
+import android.content.Intent
+import android.os.IBinder
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.health.services.client.data.LocationAvailability
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.trySendBlocking
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import kotlinx.coroutines.flow.StateFlow
+import me.goldhardt.woderful.service.ActiveDurationUpdate
+import me.goldhardt.woderful.service.ForegroundService
 
-/**
- * Entry point for [HealthServicesClient] APIs. This also provides suspend functions around
- * those APIs to enable use in coroutines.
- */
-class HealthServicesRepository@Inject constructor(
+
+class HealthServicesRepository @Inject constructor(
     @ApplicationContext private val applicationContext: Context
 ) {
-    private val healthServicesClient = HealthServices.getClient(applicationContext)
-    private val measureClient = healthServicesClient.measureClient
 
-    suspend fun hasHeartRateCapability(): Boolean {
-        val capabilities = measureClient.getCapabilitiesAsync().await()
-        return (DataType.HEART_RATE_BPM in capabilities.supportedDataTypesMeasure)
-    }
+    @Inject
+    lateinit var exerciseClientManager: ExerciseClientManager
 
-    /**
-     * Returns a cold flow. When activated, the flow will register a callback for heart rate data
-     * and start to emit messages. When the consuming coroutine is cancelled, the measure callback
-     * is unregistered.
-     *
-     * [callbackFlow] is used to bridge between a callback-based API and Kotlin flows.
-     */
-    fun heartRateMeasureFlow() = callbackFlow {
-        val callback = object : MeasureCallback {
-            override fun onAvailabilityChanged(
-                dataType: DeltaDataType<*, *>,
-                availability: Availability
-            ) {
-                // Only send back DataTypeAvailability (not LocationAvailability)
-                if (availability is DataTypeAvailability) {
-                    trySendBlocking(MeasureMessage.MeasureAvailability(availability))
-                }
+    private var exerciseService: ForegroundService? = null
+
+    suspend fun hasExerciseCapability(): Boolean = getExerciseCapabilities() != null
+
+    private suspend fun getExerciseCapabilities() = exerciseClientManager.getExerciseCapabilities()
+
+    suspend fun isExerciseInProgress(): Boolean = exerciseClientManager.isExerciseInProgress()
+
+
+    suspend fun isTrackingExerciseInAnotherApp() =
+        exerciseClientManager.isTrackingExerciseInAnotherApp()
+
+
+    fun prepareExercise() = exerciseService?.prepareExercise()
+    fun startExercise() = exerciseService?.startExercise()
+    fun pauseExercise() = exerciseService?.pauseExercise()
+    fun endExercise() = exerciseService?.endExercise()
+    fun resumeExercise() = exerciseService?.resumeExercise()
+
+    fun markLap() = exerciseService?.markLap()
+
+    var bound = mutableStateOf(false)
+
+    var serviceState: MutableState<ServiceState> = mutableStateOf(ServiceState.Disconnected)
+
+    private val connection = object : android.content.ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            val binder = service as ForegroundService.LocalBinder
+            binder.getService().let {
+                exerciseService = it
+                serviceState.value = ServiceState.Connected(
+                    exerciseServiceState = it.exerciseServiceState,
+                    locationAvailabilityState = it.locationAvailabilityState,
+                    activeDurationUpdate = it.exerciseServiceState.value.exerciseDurationUpdate,
+                )
             }
-
-            override fun onDataReceived(data: DataPointContainer) {
-                val heartRateBpm = data.getData(DataType.HEART_RATE_BPM)
-                trySendBlocking(MeasureMessage.MeasureData(heartRateBpm))
-            }
+            bound.value = true
         }
 
-        Log.d(TAG, "Registering for data")
-        measureClient.registerMeasureCallback(DataType.HEART_RATE_BPM, callback)
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            bound.value = false
+            exerciseService = null
+            serviceState.value = ServiceState.Disconnected
+        }
 
-        awaitClose {
-            Log.d(TAG, "Unregistering for data")
-            runBlocking {
-                measureClient.unregisterMeasureCallbackAsync(DataType.HEART_RATE_BPM, callback)
-            }
+    }
+
+    fun createService() {
+        Intent(applicationContext, ForegroundService::class.java).also { intent ->
+            applicationContext.startService(intent)
+            applicationContext.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
     }
 
-    companion object {
-        private const val TAG = "HealthServicesRepository"
-    }
 }
 
-sealed class MeasureMessage {
-    class MeasureAvailability(val availability: DataTypeAvailability) : MeasureMessage()
-    class MeasureData(val data: List<SampleDataPoint<Double>>) : MeasureMessage()
+/** Store exercise values in the service state. While the service is connected,
+ * the values will persist.**/
+sealed class ServiceState {
+    object Disconnected : ServiceState()
+    data class Connected(
+        val exerciseServiceState: StateFlow<ForegroundService.ExerciseServiceState>,
+        val locationAvailabilityState: StateFlow<LocationAvailability>,
+        val activeDurationUpdate: ActiveDurationUpdate?,
+    ) : ServiceState()
 }
+
+
+
+
+
+

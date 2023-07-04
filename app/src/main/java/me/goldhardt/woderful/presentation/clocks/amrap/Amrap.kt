@@ -1,5 +1,6 @@
 package me.goldhardt.woderful.presentation.clocks.amrap
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
@@ -67,6 +68,7 @@ enum class AmrapFlow {
 
 const val DEFAULT_AMRAP_TIME = 10
 
+@SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AmrapScreen(

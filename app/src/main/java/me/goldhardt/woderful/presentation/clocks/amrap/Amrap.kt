@@ -198,11 +198,12 @@ fun AmrapInstructions(
             enter = fadeIn(
                 animationSpec = tween(
                     durationMillis = 500,
-                    delayMillis = 1000
+                    delayMillis = 750
                 )
             ),
         ) {
             Column(
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
@@ -217,6 +218,7 @@ fun AmrapInstructions(
                         .fillMaxWidth()
                         .padding(8.dp)
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Chip(
                     onClick = onFinished,
                     label = {

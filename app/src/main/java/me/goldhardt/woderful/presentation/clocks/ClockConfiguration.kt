@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -25,15 +24,26 @@ import androidx.wear.compose.material.rememberPickerState
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
+/**
+ * Index of initial selected item in the picker.
+ * For minutes picker, this is the equivalent of 12 minutes (11 + 1).
+ */
+private const val DEFAULT_SELECTED_INDEX = 11
+
+/**
+ * Range of minutes to show in the picker.
+ */
+private val DEFAULT_MINUTES_RANGE = 1..60
+
 @Composable
 fun TimeConfiguration(
-    range: List<Int> = (1..60).toList(),
+    range: List<Int> = DEFAULT_MINUTES_RANGE.toList(),
     title: String,
     onConfirm: (Int) -> Unit
 ) {
     val state = rememberPickerState(
         initialNumberOfOptions = range.size,
-        initiallySelectedOption = 12
+        initiallySelectedOption = DEFAULT_SELECTED_INDEX
     )
     Box(
         contentAlignment = Alignment.Center,
@@ -54,7 +64,9 @@ fun TimeConfiguration(
             )
             Button(
                 onClick = {
-                    onConfirm(state.selectedOption)
+                    // state.selectedOption is the index selected item
+                    val minute = state.selectedOption + 1
+                    onConfirm(minute)
                 },
             ) {
                 Icon(

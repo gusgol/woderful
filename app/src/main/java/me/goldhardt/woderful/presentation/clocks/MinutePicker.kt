@@ -57,13 +57,13 @@ fun MinutePicker(
             modifier = Modifier.size(40.dp, 100.dp),
             contentDescription = "%02d".format(pickerState.selectedOption),
             onSelected = {}
-        ) { minute: Int ->
+        ) { index: Int ->
+            val minute = index + 1
             TimePiece(
-                selected = pickerState.selectedOption == minute,
+                selected = pickerState.selectedOption == index,
                 text = "%02d".format(minute),
                 style = textStyle,
-                onSelected = {
-                }
+                onSelected = { }
             )
         }
         LaunchedEffect(this) {

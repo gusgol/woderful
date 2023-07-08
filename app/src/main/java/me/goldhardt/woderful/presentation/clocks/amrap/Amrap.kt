@@ -206,7 +206,7 @@ fun AmrapInstructions(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colors.secondary)
+                    .background(MaterialTheme.colors.background)
                     .padding(32.dp)
             ) {
                 Text(

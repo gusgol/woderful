@@ -12,12 +12,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
 import me.goldhardt.woderful.data.ServiceState
+import me.goldhardt.woderful.domain.VibrateUseCase
 import javax.inject.Inject
 
 
 @HiltViewModel
 class AmrapViewModel @Inject constructor(
-    private val healthServicesRepository: HealthServicesRepository
+    private val healthServicesRepository: HealthServicesRepository,
+    private val vibrateUseCase: VibrateUseCase,
 ) : ViewModel() {
 
     val permissions = arrayOf(
@@ -57,7 +59,14 @@ class AmrapViewModel @Inject constructor(
     fun pauseExercise() = viewModelScope.launch { healthServicesRepository.pauseExercise() }
     fun endExercise() = viewModelScope.launch { healthServicesRepository.endExercise() }
     fun resumeExercise() = viewModelScope.launch { healthServicesRepository.resumeExercise() }
-    fun markLap() = viewModelScope.launch { healthServicesRepository.markLap() }
+    fun markLap() {
+        viewModelScope.launch { healthServicesRepository.markLap() }
+        vibrate()
+    }
+
+    private fun vibrate() {
+        vibrateUseCase(500L)
+    }
 }
 
 data class ExerciseUiState(

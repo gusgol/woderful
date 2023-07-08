@@ -24,5 +24,11 @@
     <string name="title_instructions">Instructions</string>
     <string name="title_you_are_all_set">You are all set!</string>
     <string name="action_lets_start">Let\'s start</string>
-    <string name="title_loading">Loading...</string>
+    <string name="title_loading">Loading…</string>
+    <string name="title_workout_finished">Workout Finished!</string>
+    <string name="title_workout_duration">Workout duration</string>
+    <string name="title_rounds">Rounds</string>
+    <string name="title_calories">Calories</string>
+    <string name="title_avg_heart_rate">Avg. Heart Rate</string>
+    <string name="title_time">Time</string>
 </resources>

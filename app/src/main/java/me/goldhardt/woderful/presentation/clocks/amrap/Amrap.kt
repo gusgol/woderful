@@ -2,12 +2,7 @@ package me.goldhardt.woderful.presentation.clocks.amrap
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
-import android.content.Context
-import android.os.Build
 import android.os.CountDownTimer
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.horologist.composables.ExperimentalHorologistComposablesApi
@@ -39,17 +35,27 @@ import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
+import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.ServiceState
+import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.extensions.isRound
+import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.RoundsCounter
+import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
-enum class AmrapFlow {
-    TIME_CONFIG,
-    INSTRUCTIONS,
-    CLOCK,
-    RESULT
+/**
+ * Flow for the Amrap screen.
+ */
+internal sealed class AmrapFlow {
+    object TimeConfig : AmrapFlow()
+    object Instructions : AmrapFlow()
+    object Tracker : AmrapFlow()
+    data class Summary(
+        val workout: Workout,
+    ) : AmrapFlow()
 }
 
 const val DEFAULT_AMRAP_TIME = 10
@@ -63,7 +69,7 @@ fun AmrapScreen(
 
     val serviceState by viewModel.exerciseServiceState
 
-    var step by remember { mutableStateOf(AmrapFlow.TIME_CONFIG) }
+    var step: AmrapFlow by remember { mutableStateOf(AmrapFlow.TimeConfig) }
     var time by remember { mutableIntStateOf(DEFAULT_AMRAP_TIME) }
 
     when (serviceState) {
@@ -77,35 +83,41 @@ fun AmrapScreen(
             }
 
             when (step) {
-                AmrapFlow.TIME_CONFIG -> {
+                AmrapFlow.TimeConfig -> {
                     AmrapConfiguration(
                         viewModel.permissions,
                         onConfirm = { selectedTime ->
                             time = selectedTime
-                            step = AmrapFlow.INSTRUCTIONS
+                            step = AmrapFlow.Instructions
                         }
                     )
                 }
-                AmrapFlow.INSTRUCTIONS -> {
+                AmrapFlow.Instructions -> {
                     AmrapInstructions {
                         viewModel.startExercise()
-                        step = AmrapFlow.CLOCK
+                        step = AmrapFlow.Tracker
                     }
                 }
-                AmrapFlow.CLOCK -> {
+                AmrapFlow.Tracker -> {
                     AmrapClock(
                         timeMin = time,
                         exerciseMetrics = exerciseMetrics,
                         onMinuteChange = {
                             viewModel.markLap()
                         }
-                    ) {
+                    ) { workout ->
                         viewModel.endExercise()
-                        step = AmrapFlow.RESULT
+                        step = AmrapFlow.Summary(workout)
                     }
                 }
-                AmrapFlow.RESULT -> {
-                    AmrapFinished()
+                is AmrapFlow.Summary -> {
+                    val workout = (step as AmrapFlow.Summary).workout
+                    AmrapFinished(
+                        duration = workout.durationMs.toMinutesAndSeconds(),
+                        roundCount = workout.rounds,
+                        calories = workout.calories ,
+                        avgHeartRate = workout.avgHeartRate,
+                    )
                 }
             }
         }
@@ -251,7 +263,7 @@ fun AmrapClock(
     timeMin: Int,
     exerciseMetrics: DataPointContainer? = null,
     onMinuteChange: () -> Unit = {},
-    onFinished: () -> Unit = {},
+    onFinished: (Workout) -> Unit = {},
 ) {
     val segments = mutableListOf<ProgressIndicatorSegment>()
     repeat(timeMin) {
@@ -264,38 +276,42 @@ fun AmrapClock(
         )
     }
 
-    val totalMs = timeMin * 60 * 1000L
-    var remainingMillis by remember { mutableStateOf(-1L) }
+    val totalMs = timeMin * 60 * 1_000L
+    var remainingMillis by remember { mutableLongStateOf(-1L) }
 
-    var progress by remember { mutableStateOf(0f) }
+    var progress by remember { mutableFloatStateOf(0F) }
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
     )
 
+    var roundCount by remember { mutableIntStateOf(0) }
+
     val countDownTimer: CountDownTimer = object : CountDownTimer(
         totalMs,
-        1000
+        1_000L
     ) {
         override fun onTick(millisUntilFinished: Long) {
             remainingMillis = millisUntilFinished
-            progress = 1f - (millisUntilFinished.toFloat() / totalMs.toFloat())
+            progress = 1F - (millisUntilFinished.toFloat() / totalMs.toFloat())
+
+            if (remainingMillis.isRound()) {
+                onMinuteChange()
+            }
         }
 
         override fun onFinish() {
-            onFinished()
+            onFinished(
+                Workout(
+                    durationMs = totalMs,
+                    type = ClockType.AMRAP,
+                    rounds = roundCount,
+                    calories = 100,
+                    avgHeartRate = 100,
+                )
+            )
         }
     }
-
-    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        LocalContext.current.getSystemService(Context.VIBRATOR_SERVICE)
-                as Vibrator
-    }
-
-    var roundCount by remember { mutableStateOf(0) }
 
     val tempHeartRate = remember { mutableStateOf(0.0) }
     if (exerciseMetrics?.getData(DataType.HEART_RATE_BPM)?.isNotEmpty() == true) {
@@ -334,18 +350,12 @@ fun AmrapClock(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Time",
+                text = stringResource(R.string.title_time),
                 color = MaterialTheme.colors.primary,
                 style = MaterialTheme.typography.caption1
             )
             Text(
-                text = getRemainingTime(remainingMillis) {
-                    val vibrationEffect1: VibrationEffect =
-                        VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
-                    vibrator.cancel()
-                    vibrator.vibrate(vibrationEffect1)
-                    onMinuteChange()
-                },
+                text = remainingMillis.toMinutesAndSeconds(),
                 style = MaterialTheme.typography.display1
             )
             Row(horizontalArrangement = Arrangement.Center) {
@@ -362,28 +372,49 @@ fun AmrapClock(
 }
 
 @Composable
-fun AmrapFinished() {
+fun AmrapFinished(
+    duration: String,
+    roundCount: Int,
+    calories: Int,
+    avgHeartRate: Int,
+) {
+    val listState = rememberScalingLazyListState()
     Box(
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = "Workout finished!")
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            item {
+                Text(
+                    text = stringResource(R.string.title_workout_finished),
+                    style = MaterialTheme.typography.title2,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
+            item {
+                WorkoutInfoItem(value = duration, text = stringResource(R.string.title_workout_duration))
+            }
+            item {
+                WorkoutInfoItem(value = roundCount.toString(), text = stringResource(R.string.title_rounds))
+            }
+            item {
+                WorkoutInfoItem(value = calories.toString(), text = stringResource(R.string.title_calories))
+            }
+            item {
+                WorkoutInfoItem(value = avgHeartRate.toString(), text = stringResource(R.string.title_avg_heart_rate))
+            }
+
+        }
     }
 }
 internal enum class AmrapInstructionsStep {
     TAP,
     DOUBLE_TAP,
     DONE,
-}
-private fun getRemainingTime(
-    millis: Long,
-    onMinuteChange: () -> Unit = {}
-): String {
-    val minutes: Long = millis / 1000 / 60
-    val seconds: Long = millis / 1000 % 60
-    if (seconds == 0L) {
-        onMinuteChange()
-    }
-    return "%02d:%02d".format(minutes, seconds)
 }
 
 @Preview(
@@ -395,7 +426,7 @@ private fun getRemainingTime(
 @Composable
 fun AmrapClockPreview() {
     WODerfulTheme {
-        AmrapClock(timeMin = 12)
+        AmrapFinished("12:00", 12, 120, 120)
     }
 }
 

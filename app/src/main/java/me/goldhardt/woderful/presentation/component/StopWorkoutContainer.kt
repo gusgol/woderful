@@ -76,7 +76,7 @@ internal fun ConfirmationScreen(
         icon = {
             Icon(
                 Icons.Default.FrontHand,
-                contentDescription = stringResource(R.string.title_stop_workout),
+                contentDescription = stringResource(R.string.title_end_workout),
                 modifier = Modifier
                     .size(24.dp)
                     .wrapContentSize(align = Alignment.Center),
@@ -84,7 +84,7 @@ internal fun ConfirmationScreen(
         },
         title = {
             Text(
-                text = stringResource(R.string.title_stop_workout),
+                text = stringResource(R.string.title_end_workout),
                 textAlign = TextAlign.Center
             )
         },
@@ -105,7 +105,7 @@ internal fun ConfirmationScreen(
         PaddingValues(start = 10.dp, end = 10.dp, top = 24.dp, bottom = 32.dp),
     ) {
         Text(
-            text = "Stopping the workout will save your progress and end the workout.",
+            text = stringResource(R.string.title_end_confirm_desc),
             textAlign = TextAlign.Center
         )
     }

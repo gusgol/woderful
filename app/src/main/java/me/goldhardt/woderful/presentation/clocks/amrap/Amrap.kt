@@ -139,7 +139,7 @@ fun AmrapScreen(
 }
 
 @Composable
-fun AmrapInstructions(
+internal fun AmrapInstructions(
     modifier: Modifier = Modifier,
     onFinished: () -> Unit,
 ) {
@@ -236,7 +236,7 @@ fun AmrapInstructions(
 
 @ExperimentalPermissionsApi
 @Composable
-fun AmrapConfiguration(
+internal fun AmrapConfiguration(
     permissions: Array<String>,
     onConfirm: (Int) -> Unit = {}
 ) {
@@ -387,7 +387,7 @@ internal fun AmrapTracker(
 }
 
 @Composable
-fun AmrapFinished(
+internal fun AmrapFinished(
     duration: String,
     roundCount: Int,
     calories: Int,

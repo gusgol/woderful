@@ -43,6 +43,7 @@ import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.RoundsCounter
+import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
@@ -99,7 +100,7 @@ fun AmrapScreen(
                     }
                 }
                 AmrapFlow.Tracker -> {
-                    AmrapClock(
+                    AmrapTracker(
                         timeMin = time,
                         exerciseMetrics = exerciseMetrics,
                         onMinuteChange = {
@@ -259,9 +260,10 @@ fun AmrapConfiguration(
     )
 }
 
+
 @OptIn(ExperimentalHorologistComposablesApi::class)
 @Composable
-fun AmrapClock(
+internal fun AmrapTracker(
     timeMin: Int,
     exerciseMetrics: DataPointContainer? = null,
     onMinuteChange: () -> Unit = {},
@@ -289,6 +291,18 @@ fun AmrapClock(
 
     var roundCount by remember { mutableIntStateOf(0) }
 
+    val endWorkout: (Long) -> Unit = { totalTimeMs ->
+        onFinished(
+            Workout(
+                durationMs = totalTimeMs,
+                type = ClockType.AMRAP,
+                rounds = roundCount,
+                calories = 100,
+                avgHeartRate = 100,
+            )
+        )
+    }
+
     val countDownTimer: CountDownTimer = object : CountDownTimer(
         totalMs,
         1_000L
@@ -303,15 +317,7 @@ fun AmrapClock(
         }
 
         override fun onFinish() {
-            onFinished(
-                Workout(
-                    durationMs = totalMs,
-                    type = ClockType.AMRAP,
-                    rounds = roundCount,
-                    calories = 100,
-                    avgHeartRate = 100,
-                )
-            )
+            endWorkout(totalMs)
         }
     }
 
@@ -324,46 +330,53 @@ fun AmrapClock(
         tempHeartRate.value = tempHeartRate.value
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        roundCount++
-                    },
-                    onDoubleTap = {
-                        if (roundCount > 0) {
-                            roundCount--
-                        }
-                    }
-                )
-            }
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
+    StopWorkoutContainer(
+        onConfirm = {
+            val totalTimeMs = totalMs - remainingMillis
+            endWorkout(totalTimeMs)
+        }
     ) {
-        SegmentedProgressIndicator(
-            trackSegments = segments,
-            progress = animatedProgress,
-            paddingAngle = 2f,
-            strokeWidth = 8.dp,
-        )
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            roundCount++
+                        },
+                        onDoubleTap = {
+                            if (roundCount > 0) {
+                                roundCount--
+                            }
+                        }
+                    )
+                }
+                .padding(4.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = stringResource(R.string.title_time),
-                color = MaterialTheme.colors.primary,
-                style = MaterialTheme.typography.caption1
+            SegmentedProgressIndicator(
+                trackSegments = segments,
+                progress = animatedProgress,
+                paddingAngle = 2f,
+                strokeWidth = 8.dp,
             )
-            Text(
-                text = remainingMillis.toMinutesAndSeconds(),
-                style = MaterialTheme.typography.display1
-            )
-            Row(horizontalArrangement = Arrangement.Center) {
-                HeartRateMonitor(hr = tempHeartRate.value)
-                Spacer(modifier = Modifier.width(16.dp))
-                RoundsCounter(roundCount)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(R.string.title_time),
+                    color = MaterialTheme.colors.primary,
+                    style = MaterialTheme.typography.caption1
+                )
+                Text(
+                    text = remainingMillis.toMinutesAndSeconds(),
+                    style = MaterialTheme.typography.display1
+                )
+                Row(horizontalArrangement = Arrangement.Center) {
+                    HeartRateMonitor(hr = tempHeartRate.value)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    RoundsCounter(roundCount)
+                }
             }
         }
     }

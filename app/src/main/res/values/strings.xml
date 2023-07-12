@@ -31,4 +31,7 @@
     <string name="title_calories">Calories</string>
     <string name="title_avg_heart_rate">Avg. Heart Rate</string>
     <string name="title_time">Time</string>
+    <string name="title_stop_workout">Stop workout?</string>
+    <string name="title_no">No</string>
+    <string name="title_yes">Yes</string>
 </resources>

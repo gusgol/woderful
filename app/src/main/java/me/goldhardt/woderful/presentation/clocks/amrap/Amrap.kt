@@ -419,7 +419,7 @@ internal fun AmrapFinished(
             }
             if (calories != null) {
                 item {
-                    WorkoutInfoItem(value = String.format("%.2f", avgHeartRate), text = stringResource(R.string.title_calories))
+                    WorkoutInfoItem(value = String.format("%.2f", calories), text = stringResource(R.string.title_calories))
                 }
             }
             if (avgHeartRate != null && avgHeartRate > 0) {

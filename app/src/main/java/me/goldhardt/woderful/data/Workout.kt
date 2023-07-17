@@ -12,6 +12,6 @@ data class Workout(
     val durationMs: Long,
     val type: ClockType,
     val rounds: Int,
-    val calories: Int,
-    val avgHeartRate: Int,
+    val calories: Double?,
+    val avgHeartRate: Double?,
 )

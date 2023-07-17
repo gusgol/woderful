@@ -46,7 +46,6 @@ import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
-
 /**
  * Flow for the Amrap screen.
  */
@@ -116,8 +115,8 @@ fun AmrapScreen(
                     AmrapFinished(
                         duration = workout.durationMs.toMinutesAndSeconds(),
                         roundCount = workout.rounds,
-                        calories = workout.calories ,
-                        avgHeartRate = workout.avgHeartRate,
+                        calories = workout.calories,
+                        avgHeartRate = workout.avgHeartRate?.toInt(),
                     )
                 }
             }
@@ -292,13 +291,15 @@ internal fun AmrapTracker(
     var roundCount by remember { mutableIntStateOf(0) }
 
     val endWorkout: (Long) -> Unit = { totalTimeMs ->
+        val avgHeartRate = exerciseMetrics?.getData(DataType.HEART_RATE_BPM_STATS)?.average
+        val calories = exerciseMetrics?.getData(DataType.CALORIES_TOTAL)?.total
         onFinished(
             Workout(
                 durationMs = totalTimeMs,
                 type = ClockType.AMRAP,
                 rounds = roundCount,
-                calories = 100,
-                avgHeartRate = 100,
+                calories = calories,
+                avgHeartRate = avgHeartRate,
             )
         )
     }
@@ -390,8 +391,8 @@ internal fun AmrapTracker(
 internal fun AmrapFinished(
     duration: String,
     roundCount: Int,
-    calories: Int,
-    avgHeartRate: Int,
+    calories: Double?,
+    avgHeartRate: Int?,
 ) {
     val listState = rememberScalingLazyListState()
     Box(
@@ -416,13 +417,16 @@ internal fun AmrapFinished(
             item {
                 WorkoutInfoItem(value = roundCount.toString(), text = stringResource(R.string.title_rounds))
             }
-            item {
-                WorkoutInfoItem(value = calories.toString(), text = stringResource(R.string.title_calories))
+            if (calories != null) {
+                item {
+                    WorkoutInfoItem(value = String.format("%.2f", avgHeartRate), text = stringResource(R.string.title_calories))
+                }
             }
-            item {
-                WorkoutInfoItem(value = avgHeartRate.toString(), text = stringResource(R.string.title_avg_heart_rate))
+            if (avgHeartRate != null && avgHeartRate > 0) {
+                item {
+                    WorkoutInfoItem(value = avgHeartRate.toString(), text = stringResource(R.string.title_avg_heart_rate))
+                }
             }
-
         }
     }
 }
@@ -441,7 +445,7 @@ internal enum class AmrapInstructionsStep {
 @Composable
 fun AmrapClockPreview() {
     WODerfulTheme {
-        AmrapFinished("12:00", 12, 120, 120)
+        AmrapFinished("12:00", 12, 120.0, 120)
     }
 }
 

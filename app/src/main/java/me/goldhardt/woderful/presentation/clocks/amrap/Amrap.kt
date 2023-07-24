@@ -290,9 +290,12 @@ internal fun AmrapTracker(
 
     var roundCount by remember { mutableIntStateOf(0) }
 
+    // TODO fix this because it does not work all the time
+    val calories =
+        exerciseMetrics?.getData(DataType.CALORIES_TOTAL)?.total
+
     val endWorkout: (Long) -> Unit = { totalTimeMs ->
         val avgHeartRate = exerciseMetrics?.getData(DataType.HEART_RATE_BPM_STATS)?.average
-        val calories = exerciseMetrics?.getData(DataType.CALORIES_TOTAL)?.total
         onFinished(
             Workout(
                 durationMs = totalTimeMs,

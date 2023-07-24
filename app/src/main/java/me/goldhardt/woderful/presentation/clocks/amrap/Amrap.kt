@@ -274,7 +274,7 @@ internal fun AmrapTracker(
             ProgressIndicatorSegment(
                 weight = 1f,
                 indicatorColor = MaterialTheme.colors.primary,
-                trackColor = MaterialTheme.colors.secondary.copy(alpha = 0.1f)
+                trackColor = MaterialTheme.colors.secondary.copy(alpha = 0.2f)
             )
         )
     }

@@ -1,5 +1,9 @@
 package me.goldhardt.woderful.data
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 /**
  * Represents a workout.
  * @param durationMs The duration of the workout in milliseconds.
@@ -8,10 +12,16 @@ package me.goldhardt.woderful.data
  * @param calories The number of calories burned.
  * @param avgHeartRate The average heart rate during the workout.
  */
+@Entity
 data class Workout(
-    val durationMs: Long,
-    val type: ClockType,
+    @ColumnInfo(name = "duration_ms") val durationMs: Long,
+    @ColumnInfo(name = "type")val type: ClockType,
     val rounds: Int,
     val calories: Double?,
-    val avgHeartRate: Double?,
-)
+    @ColumnInfo(name = "avg_heart_rate") val avgHeartRate: Double?,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+) {
+
+    @PrimaryKey(autoGenerate = true)
+    var uid: Int = 0
+}

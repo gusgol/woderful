@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
 import me.goldhardt.woderful.data.ServiceState
+import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
 import javax.inject.Inject
 
@@ -20,6 +22,7 @@ import javax.inject.Inject
 class AmrapViewModel @Inject constructor(
     private val healthServicesRepository: HealthServicesRepository,
     private val vibrateUseCase: VibrateUseCase,
+    private val insertWorkoutUseCase: InsertWorkoutUseCase,
 ) : ViewModel() {
 
     val permissions = arrayOf(
@@ -62,6 +65,12 @@ class AmrapViewModel @Inject constructor(
     fun markLap() {
         viewModelScope.launch { healthServicesRepository.markLap() }
         vibrate()
+    }
+
+    fun insertWorkout(workout: Workout) {
+        viewModelScope.launch {
+            insertWorkoutUseCase(workout)
+        }
     }
 
     private fun vibrate() {

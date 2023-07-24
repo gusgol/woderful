@@ -6,20 +6,27 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import me.goldhardt.woderful.data.local.DefaultWorkoutRepository
+import me.goldhardt.woderful.data.local.WorkoutRepository
 import me.goldhardt.woderful.domain.VibrateUseCase
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 class MainModule {
+
+    @Provides
+    fun providesIODispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Singleton
     @Provides
@@ -46,4 +53,15 @@ class MainModule {
     @Provides
     fun providerVibrationUseCase(vibrator: Vibrator): VibrateUseCase =
         VibrateUseCase(vibrator)
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+interface MainModuleBinds {
+
+    @Singleton
+    @Binds
+    fun bindsWorkoutRepository(
+        workoutRepository: DefaultWorkoutRepository
+    ): WorkoutRepository
 }

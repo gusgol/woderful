@@ -46,6 +46,8 @@ import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import java.util.Date
+
 /**
  * Flow for the Amrap screen.
  */
@@ -112,6 +114,7 @@ fun AmrapScreen(
                 }
                 is AmrapFlow.Summary -> {
                     val workout = (step as AmrapFlow.Summary).workout
+                    viewModel.insertWorkout(workout)
                     AmrapFinished(
                         duration = workout.durationMs.toMinutesAndSeconds(),
                         roundCount = workout.rounds,
@@ -303,6 +306,7 @@ internal fun AmrapTracker(
                 rounds = roundCount,
                 calories = calories,
                 avgHeartRate = avgHeartRate,
+                createdAt = Date().time
             )
         )
     }

@@ -7,18 +7,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
-import com.google.android.horologist.composables.TimePicker
 import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.presentation.clocks.MinutePicker
-import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
 import me.goldhardt.woderful.presentation.clocks.amrap.AmrapScreen
+import me.goldhardt.woderful.presentation.history.History
 import me.goldhardt.woderful.presentation.home.HomeScreen
 import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.AMRAP
 import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.EMOM
+import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.HISTORY
 import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.HOME
 
 object WODerfulScreens {
@@ -28,6 +27,9 @@ object WODerfulScreens {
     private const val CLOCK = "clock"
     const val AMRAP = "$CLOCK/amrap"
     const val EMOM = "$CLOCK/emom"
+
+    // More Options
+    const val HISTORY = "history"
 
 }
 
@@ -41,7 +43,12 @@ fun MainNavigation(
         startDestination = HOME
     ) {
         composable(HOME) {
-            HomeScreen(listState = listState) { type ->
+            HomeScreen(
+                listState = listState,
+                onHistoryClick = {
+                    navController.navigate(HISTORY)
+                }
+            ) { type ->
                 when(type) {
                     ClockType.AMRAP -> navController.navigate(AMRAP)
                     ClockType.EMOM -> navController.navigate(EMOM)
@@ -64,6 +71,9 @@ fun MainNavigation(
             ) {
                 MinutePicker(minuteState)
             }
+        }
+        composable(HISTORY) {
+            History()
         }
     }
 }

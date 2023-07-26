@@ -35,4 +35,5 @@
     <string name="title_no">No</string>
     <string name="title_yes">Yes</string>
     <string name="title_end_confirm_desc">This will your progress and end the workout.</string>
+    <string name="title_history">History</string>
 </resources>

@@ -109,12 +109,12 @@ fun AmrapScreen(
                         }
                     ) { workout ->
                         viewModel.endExercise()
+                        viewModel.insertWorkout(workout)
                         step = AmrapFlow.Summary(workout)
                     }
                 }
                 is AmrapFlow.Summary -> {
                     val workout = (step as AmrapFlow.Summary).workout
-                    viewModel.insertWorkout(workout)
                     AmrapFinished(
                         duration = workout.durationMs.toMinutesAndSeconds(),
                         roundCount = workout.rounds,
@@ -288,7 +288,8 @@ internal fun AmrapTracker(
     var progress by remember { mutableFloatStateOf(0F) }
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
-        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        label = "Progress"
     )
 
     var roundCount by remember { mutableIntStateOf(0) }

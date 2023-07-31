@@ -9,7 +9,7 @@ import me.goldhardt.woderful.data.Workout
 @Dao
 interface WorkoutDao {
 
-    @Query("SELECT * FROM workout")
+    @Query("SELECT * FROM workout ORDER BY created_at DESC")
     fun getWorkouts(): Flow<List<Workout>>
 
     @Insert

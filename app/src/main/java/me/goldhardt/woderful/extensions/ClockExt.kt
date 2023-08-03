@@ -5,7 +5,7 @@ import java.util.Date
 import java.util.Locale
 
 private const val MINUTES_AND_SECONDS = "%02d:%02d"
-private const val DEFAULT_DATE_FORMAT = "MMMM d 'at' h:mm"
+private const val DEFAULT_DATE_FORMAT = "MMM d',' h:mm a"
 
 /**
  * Converts a number of milliseconds to a string in the format "mm:ss".

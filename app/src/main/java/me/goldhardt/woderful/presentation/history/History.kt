@@ -2,8 +2,13 @@ package me.goldhardt.woderful.presentation.history
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -21,14 +26,20 @@ import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TitleCard
+import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.Workout
 import me.goldhardt.woderful.extensions.formatDate
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import java.text.DecimalFormat
 import java.util.Date
+
+private const val HISTORY_AVG_HR_FORMAT = "#"
+private const val HISTORY_CALS_FORMAT = "#"
 
 @Composable
 fun History(
@@ -91,12 +102,32 @@ fun HistoryItem(
         time = { Text(item.createdAt.formatDate()) },
     ) {
         Column {
-            Text("Duration ${item.durationMs.toMinutesAndSeconds()}")
-            if (item.calories != null && item.calories > 0) {
-                Text("Cals ${item.calories}")
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.Timer,
+                    contentDescription = stringResource(id = R.string.title_workout_duration),
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(item.durationMs.toMinutesAndSeconds())
+                if (item.calories != null && item.calories > 0) {
+                    Text(" • ")
+                    Text("${DecimalFormat(HISTORY_CALS_FORMAT).format(item.calories)} kcals")
+                }
             }
+
             if (item.avgHeartRate != null && item.avgHeartRate > 0) {
-                Text("Avg HR ${item.avgHeartRate}")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.FavoriteBorder,
+                        contentDescription = stringResource(id = R.string.title_workout_duration),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(DecimalFormat(HISTORY_AVG_HR_FORMAT).format(item.avgHeartRate))
+                }
             }
         }
     }
@@ -123,7 +154,7 @@ fun TimeConfigurationPreview() {
                     type = ClockType.AMRAP,
                     rounds = 8,
                     calories = 135.0,
-                    avgHeartRate = 90.0,
+                    avgHeartRate = 90.3,
                     createdAt = Date().time
                 )
             )

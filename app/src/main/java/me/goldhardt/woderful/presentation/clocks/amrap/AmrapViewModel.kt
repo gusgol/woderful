@@ -74,7 +74,11 @@ class AmrapViewModel @Inject constructor(
     }
 
     private fun vibrate() {
-        vibrateUseCase(500L)
+        viewModelScope.launch {
+            if (isExerciseInProgress()) {
+                vibrateUseCase(500L)
+            }
+        }
     }
 }
 

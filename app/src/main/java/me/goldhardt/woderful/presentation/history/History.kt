@@ -1,7 +1,6 @@
 package me.goldhardt.woderful.presentation.history
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -101,33 +100,27 @@ fun HistoryItem(
         },
         time = { Text(item.createdAt.formatDate()) },
     ) {
-        Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Outlined.Timer,
+                contentDescription = stringResource(id = R.string.title_workout_duration),
+                modifier = Modifier.size(14.dp)
+            )
+            Text(item.durationMs.toMinutesAndSeconds())
+            if (item.avgHeartRate != null && item.avgHeartRate > 0) {
+                Text(" • ")
                 Icon(
-                    Icons.Outlined.Timer,
+                    Icons.Outlined.FavoriteBorder,
                     contentDescription = stringResource(id = R.string.title_workout_duration),
                     modifier = Modifier.size(14.dp)
                 )
-                Text(item.durationMs.toMinutesAndSeconds())
-                if (item.calories != null && item.calories > 0) {
-                    Text(" • ")
-                    Text("${DecimalFormat(HISTORY_CALS_FORMAT).format(item.calories)} kcals")
-                }
+                Text(DecimalFormat(HISTORY_AVG_HR_FORMAT).format(item.avgHeartRate))
             }
-
-            if (item.avgHeartRate != null && item.avgHeartRate > 0) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Outlined.FavoriteBorder,
-                        contentDescription = stringResource(id = R.string.title_workout_duration),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(DecimalFormat(HISTORY_AVG_HR_FORMAT).format(item.avgHeartRate))
-                }
+            if (item.calories != null && item.calories > 0) {
+                Text(" • ")
+                Text("${DecimalFormat(HISTORY_CALS_FORMAT).format(item.calories)} kcals")
             }
         }
     }

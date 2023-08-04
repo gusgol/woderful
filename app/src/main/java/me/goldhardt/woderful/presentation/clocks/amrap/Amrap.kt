@@ -90,12 +90,22 @@ fun AmrapScreen(
                         viewModel.permissions,
                         onConfirm = { selectedTime ->
                             time = selectedTime
-                            step = AmrapFlow.Instructions
+                            step = if (viewModel.hasShownCounterInstructions) {
+                                AmrapFlow.Tracker
+                            } else {
+                                AmrapFlow.Instructions
+                            }
                         }
                     )
                 }
                 AmrapFlow.Instructions -> {
                     AmrapInstructions {
+                        /**
+                         * We need to mark the instructions as shown before starting the exercise.
+                         * This is prevent this screen from being shown again when the user returns to it.
+                         */
+                        viewModel.onCounterInstructionsShown()
+
                         viewModel.startExercise()
                         step = AmrapFlow.Tracker
                     }

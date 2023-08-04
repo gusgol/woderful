@@ -4,6 +4,10 @@ import android.content.Context
 import android.os.Build
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
 import dagger.Binds
@@ -51,8 +55,17 @@ class MainModule {
 
     @Singleton
     @Provides
-    fun providerVibrationUseCase(vibrator: Vibrator): VibrateUseCase =
+    fun providesVibrationUseCase(vibrator: Vibrator): VibrateUseCase =
         VibrateUseCase(vibrator)
+
+    @Singleton
+    @Provides
+    fun providesDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            produceFile = {
+                context.preferencesDataStoreFile("user_preferences")
+            }
+        )
 }
 
 @Module

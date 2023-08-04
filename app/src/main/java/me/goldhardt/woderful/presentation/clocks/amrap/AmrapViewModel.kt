@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.data.local.UserPreferencesRepository
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
 import javax.inject.Inject
@@ -21,9 +22,12 @@ import javax.inject.Inject
 @HiltViewModel
 class AmrapViewModel @Inject constructor(
     private val healthServicesRepository: HealthServicesRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     private val vibrateUseCase: VibrateUseCase,
     private val insertWorkoutUseCase: InsertWorkoutUseCase,
 ) : ViewModel() {
+
+    var hasShownCounterInstructions = false
 
     val permissions = arrayOf(
         Manifest.permission.BODY_SENSORS,
@@ -48,6 +52,7 @@ class AmrapViewModel @Inject constructor(
     val exerciseServiceState = _exerciseServiceState
 
     init {
+        getUserPreferences()
         viewModelScope.launch {
             healthServicesRepository.createService()
         }
@@ -70,6 +75,18 @@ class AmrapViewModel @Inject constructor(
     fun insertWorkout(workout: Workout) {
         viewModelScope.launch {
             insertWorkoutUseCase(workout)
+        }
+    }
+
+    fun onCounterInstructionsShown() {
+        viewModelScope.launch {
+            userPreferencesRepository.setCounterInstructionsShown(true)
+        }
+    }
+
+    private fun getUserPreferences() {
+        viewModelScope.launch {
+            hasShownCounterInstructions = userPreferencesRepository.hasShownCounterInstructions()
         }
     }
 

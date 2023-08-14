@@ -106,11 +106,13 @@ fun AmrapScreen(
                          */
                         viewModel.onCounterInstructionsShown()
 
-                        viewModel.startExercise()
                         step = AmrapFlow.Tracker
                     }
                 }
                 AmrapFlow.Tracker -> {
+                    LaunchedEffect(Unit) {
+                        viewModel.startExercise()
+                    }
                     AmrapTracker(
                         timeMin = time,
                         exerciseMetrics = exerciseMetrics,
@@ -304,9 +306,10 @@ internal fun AmrapTracker(
 
     var roundCount by remember { mutableIntStateOf(0) }
 
-    // TODO fix this because it does not work all the time
-    val calories =
-        exerciseMetrics?.getData(DataType.CALORIES_TOTAL)?.total
+    var calories by remember { mutableDoubleStateOf(0.0) }
+    exerciseMetrics?.getData(DataType.CALORIES_TOTAL)?.total?.let {
+        calories = it
+    }
 
     val endWorkout: (Long) -> Unit = { totalTimeMs ->
         val avgHeartRate = exerciseMetrics?.getData(DataType.HEART_RATE_BPM_STATS)?.average
@@ -340,13 +343,9 @@ internal fun AmrapTracker(
         }
     }
 
-    val tempHeartRate = remember { mutableStateOf(0.0) }
+    var heartRate by remember { mutableDoubleStateOf(0.0) }
     if (exerciseMetrics?.getData(DataType.HEART_RATE_BPM)?.isNotEmpty() == true) {
-        tempHeartRate.value =
-            exerciseMetrics.getData(DataType.HEART_RATE_BPM)
-                .last().value
-    } else {
-        tempHeartRate.value = tempHeartRate.value
+        heartRate = exerciseMetrics.getData(DataType.HEART_RATE_BPM).last().value
     }
 
     StopWorkoutContainer(
@@ -392,7 +391,7 @@ internal fun AmrapTracker(
                     style = MaterialTheme.typography.display1
                 )
                 Row(horizontalArrangement = Arrangement.Center) {
-                    HeartRateMonitor(hr = tempHeartRate.value)
+                    HeartRateMonitor(hr = heartRate)
                     Spacer(modifier = Modifier.width(16.dp))
                     RoundsCounter(roundCount)
                 }

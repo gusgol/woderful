@@ -30,7 +30,6 @@ import androidx.health.services.client.data.ExerciseTrackedStatus
 import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.ExerciseTypeCapabilities
 import androidx.health.services.client.data.ExerciseUpdate
-import androidx.health.services.client.data.LocationAvailability
 import androidx.health.services.client.data.WarmUpConfig
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -169,11 +168,6 @@ class ExerciseClientManager @Inject constructor(
             override fun onAvailabilityChanged(
                 dataType: DataType<*, *>, availability: Availability
             ) {
-                if (availability is LocationAvailability) {
-                    coroutineScope.runCatching {
-                        trySendBlocking(ExerciseMessage.LocationAvailabilityMessage(availability))
-                    }
-                }
             }
         }
         exerciseClient.setUpdateCallback(callback)
@@ -192,8 +186,6 @@ class ExerciseClientManager @Inject constructor(
 sealed class ExerciseMessage {
     class ExerciseUpdateMessage(val exerciseUpdate: ExerciseUpdate) : ExerciseMessage()
     class LapSummaryMessage(val lapSummary: ExerciseLapSummary) : ExerciseMessage()
-    class LocationAvailabilityMessage(val locationAvailability: LocationAvailability) :
-        ExerciseMessage()
 }
 
 

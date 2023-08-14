@@ -20,7 +20,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Binder
@@ -32,7 +31,6 @@ import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.ExerciseEndReason
 import androidx.health.services.client.data.ExerciseState
 import androidx.health.services.client.data.ExerciseUpdate
-import androidx.health.services.client.data.LocationAvailability
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -65,9 +63,6 @@ class ForegroundService : LifecycleService() {
     private var isStarted = false
     private val localBinder = LocalBinder()
     private var serviceRunningInForeground = false
-
-    private val _locationAvailabilityState = MutableStateFlow(LocationAvailability.UNKNOWN)
-    val locationAvailabilityState: StateFlow<LocationAvailability> = _locationAvailabilityState
 
     private var lastActiveDurationCheckpoint: ExerciseUpdate.ActiveDurationCheckpoint? = null
 
@@ -172,9 +167,6 @@ class ForegroundService : LifecycleService() {
                                             exerciseLaps = it.lapSummary.lapCount
                                         )
                                     }
-                                is ExerciseMessage.LocationAvailabilityMessage ->
-                                    _locationAvailabilityState.value = it.locationAvailability
-
                             }
                         }
                     }
@@ -183,7 +175,7 @@ class ForegroundService : LifecycleService() {
         }
         // If our process is stopped, we might have an active exercise. We want the system to
         // recreate our service so that we can present the ongoing notification in that case.
-        return Service.START_STICKY
+        return START_STICKY
     }
 
     private fun stopSelfIfNotRunning() {

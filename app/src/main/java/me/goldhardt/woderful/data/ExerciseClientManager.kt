@@ -33,8 +33,10 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
 import me.goldhardt.woderful.extensions.isExerciseInProgress
+import javax.inject.Singleton
 
 
+@Singleton
 class ExerciseClientManager @Inject constructor(
     healthServicesClient: HealthServicesClient,
 ) {

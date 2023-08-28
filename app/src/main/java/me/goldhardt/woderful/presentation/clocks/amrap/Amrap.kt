@@ -352,6 +352,7 @@ internal fun AmrapTracker(
         onConfirm = {
             val totalTimeMs = totalMs - remainingMillis
             endWorkout(totalTimeMs)
+            countDownTimer.cancel()
         }
     ) {
         Box(

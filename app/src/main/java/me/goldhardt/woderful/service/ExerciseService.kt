@@ -1,32 +1,10 @@
-/*
- * Copyright 2022 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package me.goldhardt.woderful.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import android.os.SystemClock
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.ExerciseEndReason
 import androidx.health.services.client.data.ExerciseState
@@ -35,8 +13,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.wear.ongoing.OngoingActivity
-import androidx.wear.ongoing.Status
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.Duration
 import java.time.Instant
@@ -47,10 +23,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ExerciseClientManager
-import me.goldhardt.woderful.data.ExerciseMessage
-import me.goldhardt.woderful.presentation.MainActivity
+import me.goldhardt.woderful.data.ExerciseInfo
 
 
 @AndroidEntryPoint
@@ -66,7 +40,6 @@ class ForegroundService : LifecycleService() {
 
     private var lastActiveDurationCheckpoint: ExerciseUpdate.ActiveDurationCheckpoint? = null
 
-    //Capturing most of the values associated with our exercise in a data class
     data class ExerciseServiceState(
         val exerciseState: ExerciseState = ExerciseState.ENDED,
         val exerciseMetrics: DataPointContainer? = null,
@@ -99,7 +72,6 @@ class ForegroundService : LifecycleService() {
         lifecycleScope.launch {
             exerciseClientManager.startExercise()
         }
-        postOngoingActivityNotification()
     }
 
     /**
@@ -127,7 +99,6 @@ class ForegroundService : LifecycleService() {
         lifecycleScope.launch {
             exerciseClientManager.endExercise()
         }
-        removeOngoingActivityNotification()
     }
 
 
@@ -159,9 +130,9 @@ class ForegroundService : LifecycleService() {
                     launch {
                         exerciseClientManager.exerciseUpdateFlow.collect {
                             when (it) {
-                                is ExerciseMessage.ExerciseUpdateMessage ->
+                                is ExerciseInfo.ExerciseUpdateInfo ->
                                     processExerciseUpdate(it.exerciseUpdate)
-                                is ExerciseMessage.LapSummaryMessage ->
+                                is ExerciseInfo.LapSummaryInfo ->
                                     _exerciseServiceState.update { oldState ->
                                         oldState.copy(
                                             exerciseLaps = it.lapSummary.lapCount
@@ -199,9 +170,6 @@ class ForegroundService : LifecycleService() {
         if (!oldState.isEnded && exerciseUpdate.exerciseStateInfo.state.isEnded) {
             // Our exercise ended. Gracefully handle this termination be doing the following:
             // TODO Save partial workout state, show workout summary, and let the user know why the exercise was ended.
-
-            // Dismiss any ongoing activity notification.
-            removeOngoingActivityNotification()
 
             // Custom flow for the possible states captured by the isEnded boolean
             when (exerciseUpdate.exerciseStateInfo.endReason) {
@@ -304,112 +272,19 @@ class ForegroundService : LifecycleService() {
         return true
     }
 
-    private fun removeOngoingActivityNotification() {
-        if (serviceRunningInForeground) {
-            Log.d(TAG, "Removing ongoing activity notification")
-            serviceRunningInForeground = false
-            stopForeground(STOP_FOREGROUND_REMOVE)
-
-        }
-    }
-
-    private fun postOngoingActivityNotification() {
-        if (!serviceRunningInForeground) {
-            serviceRunningInForeground = true
-            Log.d(TAG, "Posting ongoing activity notification")
-
-            createNotificationChannel()
-            startForeground(NOTIFICATION_ID, buildNotification())
-        }
-    }
-
-    private fun createNotificationChannel() {
-        val notificationChannel = NotificationChannel(
-            NOTIFICATION_CHANNEL,
-            NOTIFICATION_CHANNEL_DISPLAY,
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        manager.createNotificationChannel(notificationChannel)
-    }
-
-    private fun buildNotification(): Notification {
-        // Make an intent that will take the user straight to the exercise UI.
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            notificationIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        // Build the notification.
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
-            .setContentTitle(NOTIFICATION_TITLE)
-            .setContentText(NOTIFICATION_TEXT)
-            .setSmallIcon(R.drawable.ic_workout)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setCategory(NotificationCompat.CATEGORY_WORKOUT)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-
-        // Ongoing Activity allows an ongoing Notification to appear on additional surfaces in the
-        // Wear OS user interface, so that users can stay more engaged with long running tasks.
-
-        val duration = if (lastActiveDurationCheckpoint != null) {
-            lastActiveDurationCheckpoint!!.activeDuration + Duration.between(
-                lastActiveDurationCheckpoint!!.time,
-                Instant.now()
-            )
-        } else {
-            Duration.ZERO
-        }
-
-
-        val startMillis = SystemClock.elapsedRealtime() - duration.toMillis()
-        val ongoingActivityStatus = Status.Builder()
-            .addTemplate(ONGOING_STATUS_TEMPLATE)
-            .addPart("duration", Status.StopwatchPart(startMillis))
-            .build()
-        val ongoingActivity =
-            OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notificationBuilder)
-                .setAnimatedIcon(R.drawable.ic_workout)
-                .setStaticIcon(R.drawable.ic_workout)
-                .setTouchIntent(pendingIntent)
-                .setStatus(ongoingActivityStatus)
-                .build()
-
-        ongoingActivity.apply(applicationContext)
-
-        return notificationBuilder.build()
-    }
-
-
     /** Local clients will use this to access the service. */
     inner class LocalBinder : Binder() {
         fun getService() = this@ForegroundService
     }
 
     companion object {
-        private const val NOTIFICATION_ID = 1
-        private const val NOTIFICATION_CHANNEL =
-            "me.goldhardt.woderful.ONGOING_EXERCISE"
-        private const val NOTIFICATION_CHANNEL_DISPLAY = "Ongoing Exercise"
-        private const val NOTIFICATION_TITLE = "Exercise Sample"
-        private const val NOTIFICATION_TEXT = "Ongoing Exercise"
-        private const val ONGOING_STATUS_TEMPLATE = "Ongoing Exercise #duration#"
         private const val UNBIND_DELAY_MILLIS = 3_000L
-
     }
-
-
 }
 
 
-/** Keeps track of the last time we received an update for active exercise duration. */
 data class ActiveDurationUpdate(
-    /** The last active duration reported. */
     val duration: Duration = Duration.ZERO,
-    /** The instant at which the last duration was reported. */
     val timestamp: Instant = Instant.now()
 
 )

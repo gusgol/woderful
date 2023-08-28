@@ -20,11 +20,8 @@ import androidx.concurrent.futures.await
 import androidx.health.services.client.ExerciseUpdateCallback
 import androidx.health.services.client.HealthServicesClient
 import androidx.health.services.client.data.Availability
-import androidx.health.services.client.data.ComparisonType
 import androidx.health.services.client.data.DataType
-import androidx.health.services.client.data.DataTypeCondition
 import androidx.health.services.client.data.ExerciseConfig
-import androidx.health.services.client.data.ExerciseGoal
 import androidx.health.services.client.data.ExerciseLapSummary
 import androidx.health.services.client.data.ExerciseTrackedStatus
 import androidx.health.services.client.data.ExerciseType
@@ -67,39 +64,20 @@ class ExerciseClientManager @Inject constructor(
         return exerciseInfo.exerciseTrackedStatus == ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS
     }
 
-    private fun supportsCalorieGoal(capabilities: ExerciseTypeCapabilities): Boolean {
-        val supported = capabilities.supportedGoals[DataType.CALORIES_TOTAL]
-        return supported != null && ComparisonType.GREATER_THAN_OR_EQUAL in supported
-    }
-
     suspend fun startExercise() {
         Log.d(OUTPUT, "Starting exercise")
-        // Types for which we want to receive metrics. Only ask for ones that are supported.
         val capabilities = getExerciseCapabilities() ?: return
         val dataTypes = setOf(
             DataType.HEART_RATE_BPM,
             DataType.HEART_RATE_BPM_STATS,
             DataType.CALORIES_TOTAL,
         ).intersect(capabilities.supportedDataTypes)
-        val exerciseGoals = mutableListOf<ExerciseGoal<Double>>()
-        if (supportsCalorieGoal(capabilities)) {
-            exerciseGoals.add(
-                ExerciseGoal.createOneTimeGoal(
-                    DataTypeCondition(
-                        dataType = DataType.CALORIES_TOTAL,
-                        threshold = CALORIES_THRESHOLD,
-                        comparisonType = ComparisonType.GREATER_THAN_OR_EQUAL
-                    )
-                )
-            )
-        }
 
         val config = ExerciseConfig(
             exerciseType = ExerciseType.WORKOUT,
             dataTypes = dataTypes,
             isAutoPauseAndResumeEnabled = false,
             isGpsEnabled = false,
-            exerciseGoals = exerciseGoals
         )
         exerciseClient.startExerciseAsync(config).await()
     }
@@ -148,13 +126,13 @@ class ExerciseClientManager @Inject constructor(
         val callback = object : ExerciseUpdateCallback {
             override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
                 coroutineScope.runCatching {
-                    trySendBlocking(ExerciseMessage.ExerciseUpdateMessage(update))
+                    trySendBlocking(ExerciseInfo.ExerciseUpdateInfo(update))
                 }
             }
 
             override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {
                 coroutineScope.runCatching {
-                    trySendBlocking(ExerciseMessage.LapSummaryMessage(lapSummary))
+                    trySendBlocking(ExerciseInfo.LapSummaryInfo(lapSummary))
                 }
             }
 
@@ -177,15 +155,14 @@ class ExerciseClientManager @Inject constructor(
     }
 
     private companion object {
-        const val CALORIES_THRESHOLD = 250.0
         const val OUTPUT = "Output"
     }
 }
 
 
-sealed class ExerciseMessage {
-    class ExerciseUpdateMessage(val exerciseUpdate: ExerciseUpdate) : ExerciseMessage()
-    class LapSummaryMessage(val lapSummary: ExerciseLapSummary) : ExerciseMessage()
+sealed class ExerciseInfo {
+    class ExerciseUpdateInfo(val exerciseUpdate: ExerciseUpdate) : ExerciseInfo()
+    class LapSummaryInfo(val lapSummary: ExerciseLapSummary) : ExerciseInfo()
 }
 
 

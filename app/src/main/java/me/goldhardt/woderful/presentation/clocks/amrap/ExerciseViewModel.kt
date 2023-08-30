@@ -1,13 +1,12 @@
 package me.goldhardt.woderful.presentation.clocks.amrap
 
 import android.Manifest
-import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
@@ -16,11 +15,21 @@ import me.goldhardt.woderful.data.Workout
 import me.goldhardt.woderful.data.local.UserPreferencesRepository
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
+import me.goldhardt.woderful.service.ExerciseServiceState
 import javax.inject.Inject
 
+data class ExerciseScreenState(
+    val hasExerciseCapabilities: Boolean,
+    val isTrackingAnotherExercise: Boolean,
+    val serviceState: ServiceState,
+    val exerciseState: ExerciseServiceState?
+) {
+    val isEnded: Boolean
+        get() = exerciseState?.exerciseState?.isEnded == true
+}
 
 @HiltViewModel
-class AmrapViewModel @Inject constructor(
+class ExerciseViewModel @Inject constructor(
     private val healthServicesRepository: HealthServicesRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val vibrateUseCase: VibrateUseCase,
@@ -34,41 +43,57 @@ class AmrapViewModel @Inject constructor(
         Manifest.permission.ACTIVITY_RECOGNITION
     )
 
-    val uiState: StateFlow<ExerciseUiState> = flow {
-        emit(
-            ExerciseUiState(
-                hasExerciseCapabilities = healthServicesRepository.hasExerciseCapability(),
-                isTrackingAnotherExercise = healthServicesRepository.isTrackingExerciseInAnotherApp(),
-            )
+    val uiState: StateFlow<ExerciseScreenState> = healthServicesRepository.serviceState.map {
+        ExerciseScreenState(
+            hasExerciseCapabilities = healthServicesRepository.hasExerciseCapability(),
+            isTrackingAnotherExercise = healthServicesRepository.isTrackingExerciseInAnotherApp(),
+            serviceState = it,
+            exerciseState = (it as? ServiceState.Connected)?.exerciseServiceState
         )
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(3_000),
-        ExerciseUiState()
+        healthServicesRepository.serviceState.value.let {
+            ExerciseScreenState(
+                true,
+                false,
+                it,
+                (it as? ServiceState.Connected)?.exerciseServiceState
+            )
+        }
     )
-
-    private var _exerciseServiceState: MutableState<ServiceState> =
-        healthServicesRepository.serviceState
-    val exerciseServiceState = _exerciseServiceState
 
     init {
         getUserPreferences()
-        viewModelScope.launch {
-            healthServicesRepository.createService()
-        }
+        healthServicesRepository.createService()
     }
 
     suspend fun isExerciseInProgress(): Boolean {
         return healthServicesRepository.isExerciseInProgress()
     }
 
-    fun prepareExercise() = viewModelScope.launch { healthServicesRepository.prepareExercise() }
-    fun startExercise() = viewModelScope.launch { healthServicesRepository.startExercise() }
-    fun pauseExercise() = viewModelScope.launch { healthServicesRepository.pauseExercise() }
-    fun endExercise() = viewModelScope.launch { healthServicesRepository.endExercise() }
-    fun resumeExercise() = viewModelScope.launch { healthServicesRepository.resumeExercise() }
+    fun prepareExercise() {
+        healthServicesRepository.prepareExercise()
+    }
+
+    fun startExercise() {
+        healthServicesRepository.startExercise()
+    }
+
+    fun pauseExercise() {
+        healthServicesRepository.pauseExercise()
+    }
+
+    fun endExercise() {
+        healthServicesRepository.endExercise()
+    }
+
+    fun resumeExercise() {
+        healthServicesRepository.resumeExercise()
+    }
+
     fun markLap() {
-        viewModelScope.launch { healthServicesRepository.markLap() }
+        healthServicesRepository.markLap()
         vibrate()
     }
 
@@ -98,8 +123,3 @@ class AmrapViewModel @Inject constructor(
         }
     }
 }
-
-data class ExerciseUiState(
-    val hasExerciseCapabilities: Boolean = true,
-    val isTrackingAnotherExercise: Boolean = false,
-)

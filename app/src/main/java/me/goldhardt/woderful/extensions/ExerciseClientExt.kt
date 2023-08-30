@@ -1,0 +1,15 @@
+package me.goldhardt.woderful.extensions
+
+import androidx.health.services.client.ExerciseClient
+import androidx.health.services.client.data.ExerciseTrackedStatus
+import androidx.health.services.client.getCurrentExerciseInfo
+
+suspend fun ExerciseClient.isExerciseInProgress(): Boolean {
+    val exerciseInfo = getCurrentExerciseInfo()
+    return exerciseInfo.exerciseTrackedStatus == ExerciseTrackedStatus.OWNED_EXERCISE_IN_PROGRESS
+}
+
+suspend fun ExerciseClient.isTrackingExerciseInAnotherApp(): Boolean {
+    val exerciseInfo = getCurrentExerciseInfo()
+    return exerciseInfo.exerciseTrackedStatus == ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS
+}

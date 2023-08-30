@@ -3,10 +3,11 @@
 
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-feature android:name="android.hardware.type.watch" />
 
     <application
         android:name=".WODerfulApplication"
@@ -23,7 +24,6 @@
         <activity
             android:name=".presentation.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@android:style/Theme.DeviceDefault">
             <intent-filter>
@@ -34,7 +34,7 @@
         </activity>
 
         <service
-            android:name=".service.ForegroundService"
+            android:name=".service.ExerciseService"
             android:exported="false"
             android:foregroundServiceType="health" />
 
@@ -42,10 +42,5 @@
             android:name="com.google.android.wearable"
             android:required="true" />
     </application>
-
-    <uses-feature android:name="android.hardware.type.watch" />
-
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.VIBRATE" />
 
 </manifest>

@@ -23,9 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.health.services.client.data.DataPointContainer
-import androidx.health.services.client.data.DataType
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
@@ -66,20 +65,21 @@ const val DEFAULT_AMRAP_TIME = 10
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AmrapScreen(
-    viewModel: AmrapViewModel = hiltViewModel()
+    viewModel: ExerciseViewModel = hiltViewModel()
 ) {
 
-    val serviceState by viewModel.exerciseServiceState
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var step: AmrapFlow by remember { mutableStateOf(AmrapFlow.TimeConfig) }
-    var time by remember { mutableIntStateOf(DEFAULT_AMRAP_TIME) }
+    var durationGoalMin by remember { mutableIntStateOf(DEFAULT_AMRAP_TIME) }
 
-    when (serviceState) {
+    if (uiState.isEnded) {
+        // TODO act accordingly
+    }
+
+    when (uiState.serviceState) {
         is ServiceState.Connected -> {
-
-            val getExerciseServiceState by (serviceState as ServiceState.Connected).exerciseServiceState.collectAsState()
-            val exerciseMetrics by mutableStateOf(getExerciseServiceState.exerciseMetrics)
-
+            
             LaunchedEffect(Unit) {
                 viewModel.prepareExercise()
             }
@@ -89,7 +89,7 @@ fun AmrapScreen(
                     AmrapConfiguration(
                         viewModel.permissions,
                         onConfirm = { selectedTime ->
-                            time = selectedTime
+                            durationGoalMin = selectedTime
                             step = if (viewModel.hasShownCounterInstructions) {
                                 AmrapFlow.Tracker
                             } else {
@@ -114,8 +114,8 @@ fun AmrapScreen(
                         viewModel.startExercise()
                     }
                     AmrapTracker(
-                        timeMin = time,
-                        exerciseMetrics = exerciseMetrics,
+                        durationMin = durationGoalMin,
+                        uiState = uiState,
                         onMinuteChange = {
                             viewModel.markLap()
                         }
@@ -278,13 +278,15 @@ internal fun AmrapConfiguration(
 @OptIn(ExperimentalHorologistComposablesApi::class)
 @Composable
 internal fun AmrapTracker(
-    timeMin: Int,
-    exerciseMetrics: DataPointContainer? = null,
+    durationMin: Int,
+    uiState: ExerciseScreenState,
     onMinuteChange: () -> Unit = {},
     onFinished: (Workout) -> Unit = {},
 ) {
+    val metrics = uiState.exerciseState?.exerciseMetrics
+
     val segments = mutableListOf<ProgressIndicatorSegment>()
-    repeat(timeMin) {
+    repeat(durationMin) {
         segments.add(
             ProgressIndicatorSegment(
                 weight = 1f,
@@ -294,7 +296,7 @@ internal fun AmrapTracker(
         )
     }
 
-    val totalMs = timeMin * 60 * 1_000L
+    val totalMs = durationMin * 60 * 1_000L
     var remainingMillis by remember { mutableLongStateOf(-1L) }
 
     var progress by remember { mutableFloatStateOf(0F) }
@@ -307,19 +309,18 @@ internal fun AmrapTracker(
     var roundCount by remember { mutableIntStateOf(0) }
 
     var calories by remember { mutableDoubleStateOf(0.0) }
-    exerciseMetrics?.getData(DataType.CALORIES_TOTAL)?.total?.let {
+    metrics?.calories?.let {
         calories = it
     }
 
     val endWorkout: (Long) -> Unit = { totalTimeMs ->
-        val avgHeartRate = exerciseMetrics?.getData(DataType.HEART_RATE_BPM_STATS)?.average
         onFinished(
             Workout(
                 durationMs = totalTimeMs,
                 type = ClockType.AMRAP,
                 rounds = roundCount,
                 calories = calories,
-                avgHeartRate = avgHeartRate,
+                avgHeartRate = metrics?.heartRateAverage,
                 createdAt = Date().time
             )
         )
@@ -344,8 +345,8 @@ internal fun AmrapTracker(
     }
 
     var heartRate by remember { mutableDoubleStateOf(0.0) }
-    if (exerciseMetrics?.getData(DataType.HEART_RATE_BPM)?.isNotEmpty() == true) {
-        heartRate = exerciseMetrics.getData(DataType.HEART_RATE_BPM).last().value
+    metrics?.heartRateAverage?.let {
+        heartRate = it
     }
 
     StopWorkoutContainer(

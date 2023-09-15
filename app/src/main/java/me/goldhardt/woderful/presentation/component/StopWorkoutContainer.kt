@@ -1,5 +1,6 @@
 package me.goldhardt.woderful.presentation.component
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,11 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.dialog.Alert
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
+
+/**
+ * Stop page for [HorizontalPager].
+ */
+internal const val STOP_PAGE = 0
 
 /**
  * The initial page of the [HorizontalPager].
@@ -50,6 +56,12 @@ fun StopWorkoutContainer(
         pageCount = { PAGE_COUNT }
     )
     val coroutineScope = rememberCoroutineScope()
+
+    BackHandler {
+        coroutineScope.launch {
+            pagerState.scrollToPage(STOP_PAGE)
+        }
+    }
 
     HorizontalPager(
         state = pagerState, modifier = Modifier.fillMaxSize(),

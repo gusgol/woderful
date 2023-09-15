@@ -2,7 +2,6 @@ package me.goldhardt.woderful.presentation.clocks.amrap
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
-import android.os.CountDownTimer
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,15 +28,16 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.android.horologist.composables.ExperimentalHorologistComposablesApi
+import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
+import com.google.android.horologist.health.composables.ActiveDurationText
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.Workout
-import me.goldhardt.woderful.extensions.isRound
+import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
@@ -275,7 +275,7 @@ internal fun AmrapConfiguration(
 }
 
 
-@OptIn(ExperimentalHorologistComposablesApi::class)
+@OptIn(ExperimentalHorologistApi::class)
 @Composable
 internal fun AmrapTracker(
     durationMin: Int,
@@ -295,9 +295,6 @@ internal fun AmrapTracker(
             )
         )
     }
-
-    val totalMs = durationMin * 60 * 1_000L
-    var remainingMillis by remember { mutableLongStateOf(-1L) }
 
     var progress by remember { mutableFloatStateOf(0F) }
     val animatedProgress by animateFloatAsState(
@@ -326,24 +323,6 @@ internal fun AmrapTracker(
         )
     }
 
-    val countDownTimer: CountDownTimer = object : CountDownTimer(
-        totalMs,
-        1_000L
-    ) {
-        override fun onTick(millisUntilFinished: Long) {
-            remainingMillis = millisUntilFinished
-            progress = 1F - (millisUntilFinished.toFloat() / totalMs.toFloat())
-
-            if (remainingMillis.isRound()) {
-                onMinuteChange()
-            }
-        }
-
-        override fun onFinish() {
-            endWorkout(totalMs)
-        }
-    }
-
     var heartRate by remember { mutableDoubleStateOf(0.0) }
     metrics?.heartRateAverage?.let {
         heartRate = it
@@ -351,9 +330,16 @@ internal fun AmrapTracker(
 
     StopWorkoutContainer(
         onConfirm = {
-            val totalTimeMs = totalMs - remainingMillis
-            endWorkout(totalTimeMs)
-            countDownTimer.cancel()
+            /**
+             * TODO make progress work.
+             * TODO need to call onMinuteChange when minute changes,
+             * TODO and also end workout when time is up.
+             */
+            val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+            val elapsed = activeDuration?.let {
+                (System.currentTimeMillis() - it.time.toEpochMilli()) + it.activeDuration.toMillis()
+            } ?: 0L
+            endWorkout(elapsed)
         }
     ) {
         Box(
@@ -388,10 +374,7 @@ internal fun AmrapTracker(
                     color = MaterialTheme.colors.primary,
                     style = MaterialTheme.typography.caption1
                 )
-                Text(
-                    text = remainingMillis.toMinutesAndSeconds(),
-                    style = MaterialTheme.typography.display1
-                )
+                Duration(uiState = uiState)
                 Row(horizontalArrangement = Arrangement.Center) {
                     HeartRateMonitor(hr = heartRate)
                     Spacer(modifier = Modifier.width(16.dp))
@@ -400,9 +383,26 @@ internal fun AmrapTracker(
             }
         }
     }
+}
 
-    LaunchedEffect(Unit) {
-        countDownTimer.start()
+@OptIn(ExperimentalHorologistApi::class)
+@Composable
+fun Duration(uiState: ExerciseScreenState) {
+    val lastActiveDurationCheckpoint = uiState.exerciseState?.activeDurationCheckpoint
+    val exerciseState = uiState.exerciseState?.exerciseState
+
+    if (exerciseState != null && lastActiveDurationCheckpoint != null) {
+        ActiveDurationText(
+            checkpoint = lastActiveDurationCheckpoint,
+            state = uiState.exerciseState.exerciseState
+        ) {
+            Text(
+                text = formatElapsedTime(it),
+                style = MaterialTheme.typography.display1
+            )
+        }
+    } else {
+        Text(text = "--", style = MaterialTheme.typography.display1)
     }
 }
 

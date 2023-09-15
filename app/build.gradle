@@ -77,6 +77,7 @@ dependencies {
     implementation "com.google.android.horologist:horologist-composables:$horologist_version"
     implementation "com.google.android.horologist:horologist-compose-tools:$horologist_version"
     implementation "com.google.android.horologist:horologist-tiles:$horologist_version"
+    implementation "com.google.android.horologist:horologist-health-composables:$horologist_version"
 
     // Material
     implementation "androidx.compose.material:material:1.5.0-beta02"

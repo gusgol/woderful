@@ -76,8 +76,8 @@ class HealthServicesRepository @Inject constructor(
         exerciseService.value?.prepareExercise()
     }
 
-    fun startExercise() = coroutineScope.launch {
-        exerciseService.value?.startExercise()
+    fun startExercise(totalDurationTimeGoalS: Long) = coroutineScope.launch {
+        exerciseService.value?.startExercise(totalDurationTimeGoalS)
     }
     fun pauseExercise() = coroutineScope.launch {
         exerciseService.value?.pauseExercise()

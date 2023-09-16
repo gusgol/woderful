@@ -50,8 +50,8 @@ class ExerciseService : LifecycleService() {
     /**
      * Start exercise in this service's coroutine context.
      */
-    suspend fun startExercise() {
-        exerciseClientManager.startExercise()
+    suspend fun startExercise(totalDurationTimeGoalS: Long) {
+        exerciseClientManager.startExercise(totalDurationTimeGoalS)
     }
 
     /**
@@ -150,12 +150,22 @@ class ExerciseService : LifecycleService() {
             old.copy(
                 exerciseState = exerciseUpdate.exerciseStateInfo.state,
                 exerciseMetrics = old.exerciseMetrics.update(exerciseUpdate.latestMetrics),
+                exerciseEvent = getExerciseEvent(exerciseUpdate),
                 activeDurationCheckpoint = exerciseUpdate.activeDurationCheckpoint
-                    ?: old.activeDurationCheckpoint
+                    ?: old.activeDurationCheckpoint,
             )
+
         }
     }
 
+    private fun getExerciseEvent(exerciseUpdate: ExerciseUpdate) =
+        if (exerciseUpdate.latestAchievedGoals.isNotEmpty()) {
+            ExerciseEvent.TimeEnded
+        } else if (exerciseUpdate.latestMilestoneMarkerSummaries.isNotEmpty()) {
+            ExerciseEvent.Lap
+        } else {
+            null
+        }
 
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)

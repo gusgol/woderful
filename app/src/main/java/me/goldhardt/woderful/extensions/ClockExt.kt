@@ -3,6 +3,7 @@ package me.goldhardt.woderful.extensions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.health.services.client.data.ExerciseUpdate
 import androidx.wear.compose.material.MaterialTheme
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -52,10 +53,9 @@ fun Long.toMinutesAndSeconds(): String {
 }
 
 /**
- * Returns true if the number is a round number, i.e. it is divisible by 60.
+ * Converts a number of minutes to seconds.
  */
-fun Long.isRound(): Boolean =
-    this / 1000 % 60 == 0L
+fun Int.toSeconds(): Long = this * 60L
 
 /**
  * Converts a number of milliseconds to a string in the format "mm:ss" if the number is a round
@@ -64,4 +64,11 @@ fun Long.formatDate(): String {
     val date = Date(this)
     val dateFormat = SimpleDateFormat(DEFAULT_DATE_FORMAT, Locale.getDefault())
     return dateFormat.format(date)
+}
+
+/**
+ * Returns the elapsed time in milliseconds for the given [ExerciseUpdate.ActiveDurationCheckpoint].
+ */
+fun ExerciseUpdate.ActiveDurationCheckpoint.getElapsedTimeMs(): Long {
+    return (System.currentTimeMillis() - time.toEpochMilli()) + activeDuration.toMillis()
 }

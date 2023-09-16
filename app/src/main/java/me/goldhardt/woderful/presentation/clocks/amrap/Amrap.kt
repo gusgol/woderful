@@ -38,14 +38,26 @@ import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.Workout
 import me.goldhardt.woderful.extensions.formatElapsedTime
+import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
+import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import me.goldhardt.woderful.service.ExerciseEvent
 import java.util.Date
+
+/**
+ * To do's:
+ *
+ *      1. TODO Improve how workout is ended. It's now relying on the view, but ideally it should not need it.
+ *      2. TODO Clean up!
+ */
+
+
 
 /**
  * Flow for the Amrap screen.
@@ -79,7 +91,7 @@ fun AmrapScreen(
 
     when (uiState.serviceState) {
         is ServiceState.Connected -> {
-            
+
             LaunchedEffect(Unit) {
                 viewModel.prepareExercise()
             }
@@ -111,14 +123,11 @@ fun AmrapScreen(
                 }
                 AmrapFlow.Tracker -> {
                     LaunchedEffect(Unit) {
-                        viewModel.startExercise()
+                        viewModel.startExercise(durationGoalMin.toSeconds())
                     }
                     AmrapTracker(
                         durationMin = durationGoalMin,
                         uiState = uiState,
-                        onMinuteChange = {
-                            viewModel.markLap()
-                        }
                     ) { workout ->
                         viewModel.endExercise()
                         viewModel.insertWorkout(workout)
@@ -280,7 +289,6 @@ internal fun AmrapConfiguration(
 internal fun AmrapTracker(
     durationMin: Int,
     uiState: ExerciseScreenState,
-    onMinuteChange: () -> Unit = {},
     onFinished: (Workout) -> Unit = {},
 ) {
     val metrics = uiState.exerciseState?.exerciseMetrics
@@ -296,18 +304,28 @@ internal fun AmrapTracker(
         )
     }
 
+    var elapsedTimeMs by remember { mutableLongStateOf(0L) }
+    val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+    elapsedTimeMs = activeDuration?.getElapsedTimeMs() ?: elapsedTimeMs
+
     var progress by remember { mutableFloatStateOf(0F) }
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
         label = "Progress"
     )
+    progress = elapsedTimeMs / (durationMin * 60 * 1000).toFloat()
 
     var roundCount by remember { mutableIntStateOf(0) }
 
     var calories by remember { mutableDoubleStateOf(0.0) }
     metrics?.calories?.let {
         calories = it
+    }
+
+    var heartRate by remember { mutableDoubleStateOf(0.0) }
+    metrics?.heartRateAverage?.let {
+        heartRate = it
     }
 
     val endWorkout: (Long) -> Unit = { totalTimeMs ->
@@ -323,23 +341,13 @@ internal fun AmrapTracker(
         )
     }
 
-    var heartRate by remember { mutableDoubleStateOf(0.0) }
-    metrics?.heartRateAverage?.let {
-        heartRate = it
+    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
+        endWorkout(elapsedTimeMs)
     }
 
     StopWorkoutContainer(
         onConfirm = {
-            /**
-             * TODO make progress work.
-             * TODO need to call onMinuteChange when minute changes,
-             * TODO and also end workout when time is up.
-             */
-            val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
-            val elapsed = activeDuration?.let {
-                (System.currentTimeMillis() - it.time.toEpochMilli()) + it.activeDuration.toMillis()
-            } ?: 0L
-            endWorkout(elapsed)
+            endWorkout(elapsedTimeMs)
         }
     ) {
         Box(

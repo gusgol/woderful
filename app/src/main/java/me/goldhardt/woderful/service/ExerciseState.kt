@@ -26,4 +26,10 @@ data class ExerciseServiceState(
     val exerciseMetrics: ExerciseMetrics = ExerciseMetrics(),
     val exerciseLaps: Int = 0,
     val activeDurationCheckpoint: ExerciseUpdate.ActiveDurationCheckpoint? = null,
+    val exerciseEvent: ExerciseEvent? = null
 )
+
+sealed interface ExerciseEvent{
+    object Lap : ExerciseEvent
+    object TimeEnded : ExerciseEvent
+}

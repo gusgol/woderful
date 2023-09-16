@@ -5,8 +5,11 @@ import androidx.concurrent.futures.await
 import androidx.health.services.client.ExerciseUpdateCallback
 import androidx.health.services.client.HealthServicesClient
 import androidx.health.services.client.data.Availability
+import androidx.health.services.client.data.ComparisonType
 import androidx.health.services.client.data.DataType
+import androidx.health.services.client.data.DataTypeCondition
 import androidx.health.services.client.data.ExerciseConfig
+import androidx.health.services.client.data.ExerciseGoal
 import androidx.health.services.client.data.ExerciseLapSummary
 import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.ExerciseTypeCapabilities
@@ -62,7 +65,7 @@ class ExerciseClientManager @Inject constructor(
         }
     }
 
-    suspend fun startExercise() {
+    suspend fun startExercise(totalDurationTimeGoalS: Long, ) {
         Log.d(OUTPUT, "Starting exercise")
 
         val capabilities = getExerciseCapabilities() ?: return
@@ -72,11 +75,32 @@ class ExerciseClientManager @Inject constructor(
             DataType.CALORIES_TOTAL,
         ).intersect(capabilities.supportedDataTypes)
 
+        val totalTimeGoal = ExerciseGoal.createOneTimeGoal(
+            condition = DataTypeCondition(
+                dataType = DataType.ACTIVE_EXERCISE_DURATION_TOTAL,
+                threshold = totalDurationTimeGoalS,
+                comparisonType = ComparisonType.GREATER_THAN_OR_EQUAL
+            )
+        )
+
+        // TODO Need to change this for other workout types
+        val intervalThreshold = 60L
+
+        val intervalGoal = ExerciseGoal.createMilestone(
+            condition = DataTypeCondition(
+                dataType = DataType.ACTIVE_EXERCISE_DURATION_TOTAL,
+                threshold = intervalThreshold,
+                comparisonType = ComparisonType.GREATER_THAN_OR_EQUAL
+            ),
+            period = intervalThreshold
+        )
+
         val config = ExerciseConfig(
             exerciseType = ExerciseType.WORKOUT,
             dataTypes = dataTypes,
             isAutoPauseAndResumeEnabled = false,
             isGpsEnabled = false,
+            exerciseGoals = listOf(totalTimeGoal, intervalGoal)
         )
         exerciseClient.startExerciseAsync(config).await()
     }

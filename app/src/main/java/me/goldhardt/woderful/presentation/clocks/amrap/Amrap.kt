@@ -43,6 +43,7 @@ import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
+import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
@@ -147,15 +148,7 @@ fun AmrapScreen(
         }
 
         ServiceState.Disconnected -> {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text(
-                    text = stringResource(R.string.title_loading),
-                    style = MaterialTheme.typography.body1
-                )
-            }
+            LoadingWorkout()
         }
     }
 

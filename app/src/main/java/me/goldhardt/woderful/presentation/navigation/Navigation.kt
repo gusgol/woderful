@@ -1,18 +1,13 @@
 package me.goldhardt.woderful.presentation.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
-import androidx.wear.compose.material.rememberPickerState
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import me.goldhardt.woderful.data.ClockType
-import me.goldhardt.woderful.presentation.clocks.MinutePicker
 import me.goldhardt.woderful.presentation.clocks.amrap.AmrapScreen
+import me.goldhardt.woderful.presentation.clocks.emom.EmomScreen
 import me.goldhardt.woderful.presentation.history.History
 import me.goldhardt.woderful.presentation.home.HomeScreen
 import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.AMRAP
@@ -61,16 +56,7 @@ fun MainNavigation(
             AmrapScreen()
         }
         composable(EMOM) {
-            val minuteState = rememberPickerState(
-                initialNumberOfOptions = 60,
-                initiallySelectedOption = 12
-            )
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                MinutePicker(minuteState)
-            }
+            EmomScreen()
         }
         composable(HISTORY) {
             History()

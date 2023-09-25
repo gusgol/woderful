@@ -36,4 +36,6 @@
     <string name="title_yes">Yes</string>
     <string name="title_end_confirm_desc">This will stop your progress and end the workout.</string>
     <string name="title_history">History</string>
+    <string name="title_minutes">Minutes</string>
+    <string name="title_seconds">Seconds</string>
 </resources>

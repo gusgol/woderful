@@ -41,7 +41,7 @@ import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
-import me.goldhardt.woderful.presentation.clocks.TimeConfiguration
+import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.RoundsCounter
@@ -270,7 +270,7 @@ internal fun AmrapConfiguration(
         }
     }
 
-    TimeConfiguration(
+    MinutesTimeConfiguration(
         title = stringResource(id = R.string.title_how_long),
         onConfirm = onConfirm
     )

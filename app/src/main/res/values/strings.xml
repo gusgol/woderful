@@ -15,6 +15,7 @@
     <string translatable="false" name="tabata">Tabata</string>
     <string translatable="false" name="for_time">For Time</string>
     <string name="title_how_long">How long?</string>
+    <string name="title_every">Every</string>
     <string name="title_heart_monitor">Heart monitor</string>
     <string name="title_not_available">Not available</string>
     <string name="title_no_hr_reading">--</string>
@@ -38,4 +39,7 @@
     <string name="title_history">History</string>
     <string name="title_minutes">Minutes</string>
     <string name="title_seconds">Seconds</string>
+    <string name="title_number_of_rounds">Select the number of rounds</string>
+    <string name="title_how_many_rounds">For how many rounds?</string>
+    <string name="title_rest">Rest?</string>
 </resources>

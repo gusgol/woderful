@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,7 +37,7 @@ private const val DEFAULT_SELECTED_INDEX = 11
 private val DEFAULT_MINUTES_RANGE = 1..60
 
 @Composable
-fun TimeConfiguration(
+fun MinutesTimeConfiguration(
     range: List<Int> = DEFAULT_MINUTES_RANGE.toList(),
     title: String,
     onConfirm: (Int) -> Unit
@@ -82,6 +83,53 @@ fun TimeConfiguration(
     }
 }
 
+@Composable
+fun MinutesAndSecondsTimeConfiguration(
+    title: String,
+    confirmIcon: ImageVector = Icons.Filled.Check,
+    onConfirm: (Int, Int) -> Unit
+) {
+    val minuteState = rememberPickerState(initialNumberOfOptions = 60)
+    val secondState = rememberPickerState(initialNumberOfOptions = 60)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = title,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            MinuteAndSecondPicker(
+                minuteState = minuteState,
+                secondState = secondState,
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = {
+                    val minute = minuteState.selectedOption
+                    val second = secondState.selectedOption
+                    onConfirm(minute, second)
+                },
+            ) {
+                Icon(
+                    imageVector = confirmIcon,
+                    contentDescription =  stringResource(R.string.action_confirm),
+                    modifier = Modifier
+                        .size(24.dp)
+                        .wrapContentSize(align = Alignment.Center)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
 
 @Preview(
     device = Devices.WEAR_OS_SMALL_ROUND,
@@ -90,11 +138,27 @@ fun TimeConfiguration(
     showBackground = true
 )
 @Composable
-fun TimeConfigurationPreview() {
+fun MinutesTimeConfigurationPreview() {
     WODerfulTheme {
-        TimeConfiguration(
+        MinutesTimeConfiguration(
             title = stringResource(R.string.title_how_long)
         ) {
+        }
+    }
+}
+
+@Preview(
+    device = Devices.WEAR_OS_SMALL_ROUND,
+    showSystemUi = true,
+    backgroundColor = 0xff000000,
+    showBackground = true
+)
+@Composable
+fun MinutesAndSecondsTimeConfigurationPreview() {
+    WODerfulTheme {
+        MinutesAndSecondsTimeConfiguration(
+            title = stringResource(R.string.title_every)
+        ) { _, _ ->
         }
     }
 }

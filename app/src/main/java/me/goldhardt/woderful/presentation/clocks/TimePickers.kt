@@ -1,26 +1,20 @@
 package me.goldhardt.woderful.presentation.clocks
 
-import android.view.MotionEvent
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
@@ -35,6 +29,7 @@ import androidx.wear.compose.material.PickerState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerGroupState
 import me.goldhardt.woderful.R
+import me.goldhardt.woderful.presentation.component.PickerOptionText
 
 /**
  * A picker that allows the user to select a minute.
@@ -66,7 +61,7 @@ fun MinutePicker(
             onSelected = {}
         ) { index: Int ->
             val minute = index + 1
-            TimePiece(
+            PickerOptionText(
                 selected = pickerState.selectedOption == index,
                 text = "%02d".format(minute),
                 style = textStyle,
@@ -86,14 +81,13 @@ fun MinutePicker(
 fun MinuteAndSecondPicker(
     minuteState: PickerState,
     secondState: PickerState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val pickerGroupState = rememberPickerGroupState()
     val textStyle = MaterialTheme.typography.display3
     Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
     ) {
         Text(
             text = if (pickerGroupState.selectedIndex == 0) stringResource(id = R.string.title_minutes) else stringResource(id = R.string.title_seconds),
@@ -101,13 +95,12 @@ fun MinuteAndSecondPicker(
             style = MaterialTheme.typography.button,
             maxLines = 1
         )
-        Spacer(modifier = Modifier.size(12.dp))
         PickerGroup(
             PickerGroupItem(
                 pickerState = minuteState,
-                option = { optionIndex, selected ->
-                    TimePiece(
-                        selected = selected,
+                option = { optionIndex, _ ->
+                    PickerOptionText(
+                        selected = optionIndex == minuteState.selectedOption,
                         text = "%02d".format(optionIndex),
                         style = textStyle,
                         onSelected = { }
@@ -119,9 +112,9 @@ fun MinuteAndSecondPicker(
             ),
             PickerGroupItem(
                 pickerState = secondState,
-                option = { optionIndex, selected ->
-                    TimePiece(
-                        selected = selected,
+                option = { optionIndex, _ ->
+                    PickerOptionText(
+                        selected = optionIndex == secondState.selectedOption,
                         text = "%02d".format(optionIndex),
                         style = textStyle,
                         onSelected = { }
@@ -146,36 +139,6 @@ private fun Separator(textStyle: TextStyle) {
         color = MaterialTheme.colors.onBackground,
         modifier = Modifier.clearAndSetSemantics {},
     )
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-internal fun TimePiece(
-    selected: Boolean,
-    onSelected: () -> Unit,
-    text: String,
-    style: TextStyle
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        val modifier = Modifier
-            .align(Alignment.Center)
-            .wrapContentSize()
-        Text(
-            text = text,
-            maxLines = 1,
-            style = style,
-            color = if (selected) MaterialTheme.colors.secondary
-            else MaterialTheme.colors.onBackground,
-            modifier = if (selected) {
-                modifier
-            } else {
-                modifier.pointerInteropFilter {
-                    if (it.action == MotionEvent.ACTION_DOWN) onSelected()
-                    true
-                }
-            }
-        )
-    }
 }
 
 @Composable

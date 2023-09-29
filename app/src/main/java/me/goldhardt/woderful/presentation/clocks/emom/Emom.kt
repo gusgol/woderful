@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
@@ -23,27 +21,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.presentation.clocks.MinutesAndSecondsTimeConfiguration
 import me.goldhardt.woderful.presentation.clocks.amrap.ExerciseViewModel
+import me.goldhardt.woderful.presentation.component.ConfigurationButton
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
+import me.goldhardt.woderful.presentation.component.RoundText
 
 /**
- * To do's:
- *
- *      1. Change rest to only take seconds (maybe?)
- *      2. Change seconds picker to use values such as (5, 10, 15, etc)
- *      3. Round texts
+ * Represents the flow of the Emom workout configuration.
  */
-
 internal sealed class EmomFlow {
     object TimeConfig : EmomFlow()
     object RoundsConfig : EmomFlow()
@@ -103,7 +97,10 @@ fun EmomTimeConfiguration(
 ) {
     MinutesAndSecondsTimeConfiguration(
         title = stringResource(R.string.title_every),
-        confirmIcon = Icons.Filled.ArrowForward
+        confirmIcon = Icons.Filled.ArrowForward,
+        confirmButtonEnabledCondition = { minute, second ->
+             minute > 0 || second > 0
+        }
     ) { minute, second ->
         onConfirm(minute, second)
     }
@@ -116,42 +113,38 @@ fun EmomRoundsConfiguration(
     onConfirm: (Int) -> Unit
 ) {
     val state = rememberPickerState(initialNumberOfOptions = MAX_ROUNDS)
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
+    Scaffold(
+        timeText = {
+            RoundText(stringResource(R.string.title_how_many_rounds))
+        }
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.title_how_many_rounds),
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(32.dp))
             Picker(
                 modifier = Modifier.weight(1f),
                 state = state,
-                contentDescription = stringResource(R.string.title_number_of_rounds),
+                contentDescription = stringResource(R.string.title_how_many_rounds),
             ) {
                 val currentRound = it + 1
-                PickerOptionText(selected = it == state.selectedOption, onSelected = {}, text = "%d".format(currentRound), style = MaterialTheme.typography.display3)
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = {
-                    onConfirm(state.selectedOption + 1)
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowForward,
-                    contentDescription =  stringResource(R.string.action_confirm),
-                    modifier = Modifier
-                        .size(24.dp)
-                        .wrapContentSize(align = Alignment.Center)
+                PickerOptionText(
+                    selected = it == state.selectedOption,
+                    onSelected = {},
+                    text = "%d".format(currentRound),
+                    style = MaterialTheme.typography.display3
                 )
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            ConfigurationButton(
+                onConfirm = {
+                    onConfirm(state.selectedOption + 1)
+                },
+                icon = Icons.Filled.ArrowForward,
+                contentDescription = stringResource(R.string.action_confirm),
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
     }

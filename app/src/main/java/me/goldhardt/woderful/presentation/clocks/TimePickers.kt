@@ -75,6 +75,14 @@ fun MinutePicker(
 }
 
 /**
+ * Default seconds options that allows the user to select a seconds rapidly.
+ */
+val DEFAULT_SECONDS_OPTIONS = listOf(
+    0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55,
+)
+
+
+/**
  * A picker that allows the user to select a minutes and seconds: MM:SS.
  */
 @Composable
@@ -115,7 +123,7 @@ fun MinuteAndSecondPicker(
                 option = { optionIndex, _ ->
                     PickerOptionText(
                         selected = optionIndex == secondState.selectedOption,
-                        text = "%02d".format(optionIndex),
+                        text = "%02d".format(DEFAULT_SECONDS_OPTIONS[optionIndex]),
                         style = textStyle,
                         onSelected = { }
                     )

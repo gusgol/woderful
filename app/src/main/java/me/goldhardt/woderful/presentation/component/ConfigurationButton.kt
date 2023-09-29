@@ -15,10 +15,12 @@ fun ConfigurationButton(
     onConfirm: () -> Unit,
     icon: ImageVector,
     contentDescription: String,
+    enabled: Boolean = true
 ) {
     Button(
         onClick = onConfirm,
-        modifier = Modifier.size(40.dp)
+        modifier = Modifier.size(40.dp),
+        enabled = enabled,
     ) {
         Icon(
             imageVector = icon,

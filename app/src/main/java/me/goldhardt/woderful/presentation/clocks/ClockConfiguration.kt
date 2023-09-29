@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
@@ -24,14 +22,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.CurvedLayout
 import androidx.wear.compose.foundation.curvedRow
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeTextDefaults
 import androidx.wear.compose.material.curvedText
 import androidx.wear.compose.material.rememberPickerState
 import me.goldhardt.woderful.R
+import me.goldhardt.woderful.presentation.component.ConfigurationButton
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
 /**
@@ -72,21 +69,15 @@ fun MinutesTimeConfiguration(
                 pickerState = state,
                 modifier = Modifier.weight(1f)
             )
-            Button(
-                onClick = {
+            ConfigurationButton(
+                onConfirm = {
                     // state.selectedOption is the index selected item
                     val minute = state.selectedOption + 1
                     onConfirm(minute)
                 },
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription =  stringResource(R.string.action_confirm),
-                    modifier = Modifier
-                        .size(24.dp)
-                        .wrapContentSize(align = Alignment.Center)
-                )
-            }
+                icon = Icons.Filled.Check,
+                contentDescription = stringResource(R.string.action_confirm),
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
@@ -116,28 +107,24 @@ fun MinutesAndSecondsTimeConfiguration(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Spacer(modifier = Modifier.height(32.dp))
-                Box(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
                     MinuteAndSecondPicker(
                         minuteState = minuteState,
                         secondState = secondState,
                     )
                 }
-                Button(
-                    onClick = {
+                ConfigurationButton(
+                    onConfirm = {
                         val minute = minuteState.selectedOption
                         val second = secondState.selectedOption
                         onConfirm(minute, second)
                     },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = confirmIcon,
-                        contentDescription =  stringResource(R.string.action_confirm),
-                        modifier = Modifier
-                            .size(24.dp)
-                            .wrapContentSize(align = Alignment.Center)
-                    )
-                }
+                    icon = confirmIcon,
+                    contentDescription = stringResource(R.string.action_confirm),
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }

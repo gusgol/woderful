@@ -1,6 +1,5 @@
-package me.goldhardt.woderful.presentation.clocks.amrap
+package me.goldhardt.woderful.presentation.clocks
 
-import android.Manifest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,11 +39,6 @@ class ExerciseViewModel @Inject constructor(
 ) : ViewModel() {
 
     var hasShownCounterInstructions = false
-
-    val permissions = arrayOf(
-        Manifest.permission.BODY_SENSORS,
-        Manifest.permission.ACTIVITY_RECOGNITION
-    )
 
     val uiState: StateFlow<ExerciseScreenState> = healthServicesRepository.serviceState.map {
         ExerciseScreenState(

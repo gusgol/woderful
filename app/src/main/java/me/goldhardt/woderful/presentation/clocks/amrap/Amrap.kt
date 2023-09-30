@@ -41,6 +41,9 @@ import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
+import me.goldhardt.woderful.presentation.clocks.ExercisePermissions.DEFAULT_EXERCISE_PERMISSIONS
+import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
+import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
@@ -100,7 +103,7 @@ fun AmrapScreen(
             when (step) {
                 AmrapFlow.TimeConfig -> {
                     AmrapConfiguration(
-                        viewModel.permissions,
+                        DEFAULT_EXERCISE_PERMISSIONS,
                         onConfirm = { selectedTime ->
                             durationGoalMin = selectedTime
                             step = if (viewModel.hasShownCounterInstructions) {

@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,8 +29,10 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
+import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
+import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
+import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.MinutesAndSecondsTimeConfiguration
-import me.goldhardt.woderful.presentation.clocks.amrap.ExerciseViewModel
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
@@ -39,6 +42,7 @@ import me.goldhardt.woderful.presentation.component.RoundText
  * Represents the flow of the Emom workout configuration.
  */
 internal sealed class EmomFlow {
+    object Permissions: EmomFlow()
     object TimeConfig : EmomFlow()
     object RoundsConfig : EmomFlow()
     object RestConfig : EmomFlow()
@@ -53,7 +57,13 @@ fun EmomScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Flow state
-    var step: EmomFlow by remember { mutableStateOf(EmomFlow.TimeConfig) }
+    val initialScreen = if (ExercisePermissions.hasPermissions(LocalContext.current)) {
+        EmomFlow.TimeConfig
+    } else {
+        EmomFlow.Permissions
+    }
+
+    var step: EmomFlow by remember { mutableStateOf(initialScreen) }
 
     // Workout configuration
     var roundDuration by remember { mutableStateOf(0) }
@@ -68,6 +78,11 @@ fun EmomScreen(
             }
 
             when (step) {
+                EmomFlow.Permissions -> {
+                    ExercisePermissionsLauncher {
+                        step = EmomFlow.TimeConfig
+                    }
+                }
                 EmomFlow.TimeConfig -> EmomTimeConfiguration { minute, second ->
                     roundDuration = minute * 60 + second
                     step = EmomFlow.RoundsConfig

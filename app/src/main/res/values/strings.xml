@@ -42,4 +42,6 @@
     <string name="title_number_of_rounds">Select the number of rounds</string>
     <string name="title_how_many_rounds">For how many rounds?</string>
     <string name="title_rest">Rest?</string>
+    <string name="msg_warning">Warning</string>
+    <string name="message_permissions">"We need your permission to access body sensors and workout detection."</string>
 </resources>

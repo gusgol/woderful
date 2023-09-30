@@ -154,7 +154,6 @@ fun AmrapScreen(
             LoadingWorkout()
         }
     }
-
 }
 
 @Composable

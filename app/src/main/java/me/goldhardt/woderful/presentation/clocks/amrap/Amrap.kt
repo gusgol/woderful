@@ -19,13 +19,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
@@ -49,8 +45,8 @@ import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
-import me.goldhardt.woderful.presentation.component.WorkoutInfoItem
-import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import me.goldhardt.woderful.presentation.component.SummaryScreen
+import me.goldhardt.woderful.presentation.component.defaultSummarySections
 import me.goldhardt.woderful.service.ExerciseEvent
 import java.util.Date
 
@@ -140,7 +136,7 @@ fun AmrapScreen(
                 }
                 is AmrapFlow.Summary -> {
                     val workout = (step as AmrapFlow.Summary).workout
-                    AmrapFinished(
+                    AmrapSummary(
                         duration = workout.durationMs.toMinutesAndSeconds(),
                         roundCount = workout.rounds,
                         calories = workout.calories,
@@ -410,65 +406,19 @@ fun Duration(uiState: ExerciseScreenState) {
 }
 
 @Composable
-internal fun AmrapFinished(
+internal fun AmrapSummary(
     duration: String,
     roundCount: Int,
     calories: Double?,
     avgHeartRate: Int?,
 ) {
-    val listState = rememberScalingLazyListState()
-    Box(
-        contentAlignment = Alignment.Center,
-    ) {
-        ScalingLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            item {
-                Text(
-                    text = stringResource(R.string.title_workout_finished),
-                    style = MaterialTheme.typography.title2,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(4.dp)
-                )
-            }
-            item {
-                WorkoutInfoItem(value = duration, text = stringResource(R.string.title_workout_duration))
-            }
-            item {
-                WorkoutInfoItem(value = roundCount.toString(), text = stringResource(R.string.title_rounds))
-            }
-            if (calories != null) {
-                item {
-                    WorkoutInfoItem(value = String.format("%.2f", calories), text = stringResource(R.string.title_calories))
-                }
-            }
-            if (avgHeartRate != null && avgHeartRate > 0) {
-                item {
-                    WorkoutInfoItem(value = avgHeartRate.toString(), text = stringResource(R.string.title_avg_heart_rate))
-                }
-            }
-        }
-    }
+    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate))
 }
+
 internal enum class AmrapInstructionsStep {
     TAP,
     DOUBLE_TAP,
     DONE,
-}
-
-@Preview(
-    device = Devices.WEAR_OS_SMALL_ROUND,
-    showSystemUi = true,
-    backgroundColor = 0xff000000,
-    showBackground = true
-)
-@Composable
-fun AmrapClockPreview() {
-    WODerfulTheme {
-        AmrapFinished("12:00", 12, 120.0, 120)
-    }
 }
 
 

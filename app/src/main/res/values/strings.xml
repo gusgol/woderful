@@ -43,6 +43,6 @@
     <string name="title_how_many_rounds">For how many rounds?</string>
     <string name="title_rest_question">Rest?</string>
     <string name="title_rest">Rest</string>
-    <string name="msg_warning">Warning</string>
+    <string name="message_warning">Warning</string>
     <string name="message_permissions">"We need your permission to access body sensors and workout detection."</string>
 </resources>

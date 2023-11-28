@@ -100,7 +100,7 @@ fun ExercisePermissionsLauncher(
     ) {
         Icon(
             imageVector = Icons.Outlined.Warning,
-            contentDescription = stringResource(R.string.msg_warning),
+            contentDescription = stringResource(R.string.message_warning),
             tint = MaterialTheme.colors.primary,
             modifier = Modifier
                 .size(24.dp)

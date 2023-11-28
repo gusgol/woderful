@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -27,12 +28,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.wear.compose.material.Card
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.ProgressIndicatorDefaults
@@ -43,8 +49,11 @@ import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import me.goldhardt.woderful.R
+import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.ServiceState
+import me.goldhardt.woderful.data.Workout
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
+import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
@@ -58,6 +67,18 @@ import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
 import me.goldhardt.woderful.presentation.component.RoundText
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
+import me.goldhardt.woderful.presentation.component.SummaryScreen
+import me.goldhardt.woderful.presentation.component.defaultSummarySections
+import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import me.goldhardt.woderful.service.ExerciseEvent
+import java.util.Date
+
+/**
+ * To do's
+ *
+ * 1. TODO Save configuration to database
+ * 2. TODO Fix size of Monitors (CircleContainer)
+ */
 
 /**
  * Represents the flow of the Emom workout configuration.
@@ -68,6 +89,10 @@ internal sealed class EmomFlow {
     object RoundsConfig : EmomFlow()
     object RestConfig : EmomFlow()
     object Tracker : EmomFlow()
+    data class Summary(
+        val workout: Workout,
+        val configuration: EmomConfiguration,
+    ) : EmomFlow()
 }
 
 /**
@@ -102,7 +127,7 @@ fun EmomScreen(
     var roundDuration by remember { mutableStateOf(0) }
     var roundCount by remember { mutableStateOf(0) }
     var restDuration by remember { mutableStateOf(0) }
-    
+
     when (uiState.serviceState) {
         is ServiceState.Connected -> {
 
@@ -130,19 +155,35 @@ fun EmomScreen(
                 }
                 EmomFlow.Tracker -> {
                     val totalDurationS = (roundDuration + restDuration) * roundCount
+                    val emomConfiguration = EmomConfiguration(
+                        activeDurationS = roundDuration,
+                        roundCount = roundCount,
+                        restDurationS = restDuration,
+                    )
                     LaunchedEffect(Unit) {
                         viewModel.startExercise(totalDurationS.toLong())
                     }
                     EmomTracker(
-                        EmomConfiguration(
-                            activeDurationS = roundDuration,
-                            roundCount = roundCount,
-                            restDurationS = restDuration,
-                        ),
+                        emomConfiguration,
                         uiState = uiState,
-                        onFinished = {
-                            viewModel.endExercise()
+                        onFinished = { workout ->
+                            with (viewModel) {
+                                endExercise()
+                                insertWorkout(workout)
+                            }
+                            step = EmomFlow.Summary(workout, emomConfiguration)
                         }
+                    )
+                }
+                is EmomFlow.Summary -> {
+                    val summary = (step as EmomFlow.Summary)
+                    val workout = summary.workout
+                    EmomSummary(
+                        duration = workout.durationMs.toMinutesAndSeconds(),
+                        roundCount = workout.rounds,
+                        calories = workout.calories,
+                        avgHeartRate = workout.avgHeartRate?.toInt(),
+                        configuration = summary.configuration,
                     )
                 }
             }
@@ -154,7 +195,7 @@ fun EmomScreen(
 }
 
 @Composable
-fun EmomTimeConfiguration(
+internal fun EmomTimeConfiguration(
     onConfirm: (Int, Int) -> Unit
 ) {
     MinutesAndSecondsTimeConfiguration(
@@ -171,7 +212,7 @@ fun EmomTimeConfiguration(
 internal const val MAX_ROUNDS = 99
 
 @Composable
-fun EmomRoundsConfiguration(
+internal fun EmomRoundsConfiguration(
     onConfirm: (Int) -> Unit
 ) {
     val state = rememberPickerState(initialNumberOfOptions = MAX_ROUNDS)
@@ -213,7 +254,7 @@ fun EmomRoundsConfiguration(
 }
 
 @Composable
-fun EmomRestConfiguration(
+internal fun EmomRestConfiguration(
     onConfirm: (Int, Int) -> Unit
 ) {
     MinutesAndSecondsTimeConfiguration(
@@ -224,11 +265,12 @@ fun EmomRestConfiguration(
     }
 }
 
+@OptIn(ExperimentalHorologistApi::class)
 @Composable
-fun EmomTracker(
+internal fun EmomTracker(
     emomConfiguration: EmomConfiguration,
     uiState: ExerciseScreenState,
-    onFinished: () -> Unit,
+    onFinished: (Workout) -> Unit,
 ) {
     val metrics = uiState.exerciseState?.exerciseMetrics
 
@@ -278,8 +320,29 @@ fun EmomTracker(
     var isInActiveInterval by remember { mutableStateOf(true) }
     isInActiveInterval = isInActiveInterval(emomConfiguration, elapsedTimeMs)
 
+    val completedRounds = (progress * emomConfiguration.roundCount).toInt()
+
+    val finishWorkout: () -> Unit = {
+        onFinished(
+            Workout(
+                durationMs = elapsedTimeMs,
+                type = ClockType.EMOM,
+                rounds = completedRounds,
+                calories = metrics?.calories,
+                avgHeartRate = metrics?.heartRateAverage,
+                createdAt = Date().time
+            )
+        )
+    }
+
+    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
+        finishWorkout()
+    }
+
     StopWorkoutContainer(
-        onConfirm = onFinished
+        onConfirm = {
+            finishWorkout()
+        }
     ) {
         Box(
             modifier = Modifier
@@ -317,11 +380,54 @@ fun EmomTracker(
                 Row(horizontalArrangement = Arrangement.Center) {
                     HeartRateMonitor(hr = heartRate)
                     Spacer(modifier = Modifier.width(16.dp))
-                    RoundMonitor((progress * emomConfiguration.roundCount).toInt() + 1, emomConfiguration.roundCount)
+                    RoundMonitor( completedRounds + 1, emomConfiguration.roundCount)
                 }
             }
         }
     }
+}
+
+@Composable
+internal fun EmomSummary(
+    configuration: EmomConfiguration,
+    duration: String,
+    roundCount: Int,
+    calories: Double?,
+    avgHeartRate: Int?,
+) {
+    val roundsDescription =
+        "${configuration.roundCount} ${pluralStringResource(id = R.plurals.message_rounds, count = configuration.roundCount)}"
+    val configurationSummary = stringResource(
+        R.string.title_emom_summary_desc,
+        configuration.activeDurationS.toMinutesAndSeconds(),
+        roundsDescription,
+        configuration.restDurationS.toMinutesAndSeconds()
+    )
+    SummaryScreen(
+        defaultSummarySections(duration, roundCount, calories, avgHeartRate),
+        descriptionSlot = {
+            Card(
+                onClick = {},
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(id = R.string.emom),
+                        style = MaterialTheme.typography.caption1,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colors.primary
+                    )
+                    Text(
+                        text = configurationSummary,
+                        style = MaterialTheme.typography.body2,
+                        modifier = Modifier.padding(4.dp),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        }
+    )
 }
 
 @Composable
@@ -354,4 +460,23 @@ private fun isInActiveInterval(emomConfiguration: EmomConfiguration, elapsedTime
     val totalRoundTimeMs = (emomConfiguration.activeDurationS + emomConfiguration.restDurationS)
     val roundTimeS = (elapsedTimeMs / 1_000) % totalRoundTimeMs
     return roundTimeS < emomConfiguration.activeDurationS
+}
+
+@Preview(
+    device = Devices.WEAR_OS_SMALL_ROUND,
+    showSystemUi = true,
+    backgroundColor = 0xff000000,
+    showBackground = true
+)
+@Composable
+fun AmrapClockPreview() {
+    WODerfulTheme {
+        EmomSummary(
+            EmomConfiguration(80, 1, 20),
+            "12:00",
+            12,
+            120.0,
+            120
+        )
+    }
 }

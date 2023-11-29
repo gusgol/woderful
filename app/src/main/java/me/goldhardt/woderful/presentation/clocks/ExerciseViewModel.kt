@@ -17,18 +17,7 @@ import me.goldhardt.woderful.data.local.UserPreferencesRepository
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
 import me.goldhardt.woderful.service.ExerciseEvent
-import me.goldhardt.woderful.service.ExerciseServiceState
 import javax.inject.Inject
-
-data class ExerciseScreenState(
-    val hasExerciseCapabilities: Boolean,
-    val isTrackingAnotherExercise: Boolean,
-    val serviceState: ServiceState,
-    val exerciseState: ExerciseServiceState?,
-) {
-    val isEnded: Boolean
-        get() = exerciseState?.exerciseState?.isEnded == true
-}
 
 @HiltViewModel
 class ExerciseViewModel @Inject constructor(

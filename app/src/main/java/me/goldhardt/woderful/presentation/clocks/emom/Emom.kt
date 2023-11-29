@@ -34,7 +34,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,6 +57,7 @@ import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
+import me.goldhardt.woderful.presentation.clocks.FakeExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.MinutesAndSecondsTimeConfiguration
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.component.CircleContainer
@@ -77,7 +77,6 @@ import java.util.Date
  * To do's
  *
  * 1. TODO Save configuration to database
- * 2. TODO Fix size of Monitors (CircleContainer)
  */
 
 /**
@@ -377,9 +376,13 @@ internal fun EmomTracker(
                     },
                 )
                 Duration(uiState = uiState)
-                Row(horizontalArrangement = Arrangement.Center) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     HeartRateMonitor(hr = heartRate)
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     RoundMonitor( completedRounds + 1, emomConfiguration.roundCount)
                 }
             }
@@ -434,14 +437,15 @@ internal fun EmomSummary(
 fun RoundMonitor(
     currentRound: Int,
     totalRounds: Int,
-    minimumRadius: Dp = 24.dp,
 ) {
+    val text = "$currentRound/$totalRounds"
+    val textStyle = MaterialTheme.typography.title1
+    val radius = 28.dp
     CircleContainer(
-        minimumRadius = minimumRadius,
+        radius = radius,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(12.dp)
         ) {
             Text(
                 text = "Round",
@@ -449,8 +453,17 @@ fun RoundMonitor(
                 style = MaterialTheme.typography.caption2
             )
             Text(
-                text = "$currentRound/$totalRounds",
-                style = MaterialTheme.typography.title2
+                text = text,
+                style = textStyle,
+                modifier = Modifier.width(radius * 2),
+                textAlign = TextAlign.Center,
+                fontSize = if (text.count() > 5) {
+                    textStyle.fontSize * 0.6
+                } else if (text.count() > 4){
+                    textStyle.fontSize * 0.7
+                } else {
+                    textStyle.fontSize
+                }
             )
         }
     }
@@ -469,10 +482,27 @@ private fun isInActiveInterval(emomConfiguration: EmomConfiguration, elapsedTime
     showBackground = true
 )
 @Composable
-fun AmrapClockPreview() {
+fun EmomTrackerPreview() {
+    WODerfulTheme {
+        EmomTracker(
+            emomConfiguration = EmomConfiguration(90, 4, 30),
+            uiState = FakeExerciseScreenState(),
+            onFinished = {}
+        )
+    }
+}
+
+@Preview(
+    device = Devices.WEAR_OS_SMALL_ROUND,
+    showSystemUi = true,
+    backgroundColor = 0xff000000,
+    showBackground = true
+)
+@Composable
+fun EmomSummaryPreview() {
     WODerfulTheme {
         EmomSummary(
-            EmomConfiguration(80, 1, 20),
+            EmomConfiguration(80, 10, 20),
             "12:00",
             12,
             120.0,

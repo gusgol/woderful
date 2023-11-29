@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.data.model.Workout
 import javax.inject.Inject
 
 interface WorkoutRepository {

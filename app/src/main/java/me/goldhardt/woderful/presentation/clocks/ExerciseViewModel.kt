@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
 import me.goldhardt.woderful.data.ServiceState
-import me.goldhardt.woderful.data.Workout
 import me.goldhardt.woderful.data.local.UserPreferencesRepository
+import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
 import me.goldhardt.woderful.service.ExerciseEvent

@@ -2,8 +2,9 @@ package me.goldhardt.woderful.data.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import me.goldhardt.woderful.data.Workout
+import androidx.room.TypeConverters
 import me.goldhardt.woderful.data.local.WorkoutDao
+import me.goldhardt.woderful.data.model.Workout
 
 @Database(
     entities = [
@@ -12,6 +13,7 @@ import me.goldhardt.woderful.data.local.WorkoutDao
     version = 1,
     exportSchema = false
 )
+@TypeConverters(HashMapTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
 }

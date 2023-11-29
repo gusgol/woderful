@@ -48,9 +48,10 @@ import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import me.goldhardt.woderful.R
-import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.ServiceState
-import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.data.model.ClockProperties
+import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
@@ -72,12 +73,6 @@ import me.goldhardt.woderful.presentation.component.defaultSummarySections
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 import me.goldhardt.woderful.service.ExerciseEvent
 import java.util.Date
-
-/**
- * To do's
- *
- * 1. TODO Save configuration to database
- */
 
 /**
  * Represents the flow of the Emom workout configuration.
@@ -104,7 +99,16 @@ data class EmomConfiguration(
     val activeDurationS: Int,
     val roundCount: Int,
     val restDurationS: Int,
-)
+) {
+
+    fun toProperties(): Map<String, Any> {
+        return mapOf(
+            ClockProperties.EMOM.CONFIG_ACTIVE_TIME_S to activeDurationS,
+            ClockProperties.EMOM.CONFIG_ROUNDS to roundCount,
+            ClockProperties.EMOM.CONFIG_REST_TIME to restDurationS,
+        )
+    }
+}
 
 @Composable
 fun EmomScreen(
@@ -329,7 +333,8 @@ internal fun EmomTracker(
                 rounds = completedRounds,
                 calories = metrics?.calories,
                 avgHeartRate = metrics?.heartRateAverage,
-                createdAt = Date().time
+                createdAt = Date().time,
+                properties = emomConfiguration.toProperties()
             )
         )
     }

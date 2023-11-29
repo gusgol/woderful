@@ -5,7 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyListState
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
-import me.goldhardt.woderful.data.ClockType
+import me.goldhardt.woderful.data.model.ClockType
 import me.goldhardt.woderful.presentation.clocks.amrap.AmrapScreen
 import me.goldhardt.woderful.presentation.clocks.emom.EmomScreen
 import me.goldhardt.woderful.presentation.history.History

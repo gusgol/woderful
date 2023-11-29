@@ -30,9 +30,9 @@ import com.google.android.horologist.composables.SegmentedProgressIndicator
 import com.google.android.horologist.health.composables.ActiveDurationText
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
-import me.goldhardt.woderful.data.ClockType
 import me.goldhardt.woderful.data.ServiceState
-import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds

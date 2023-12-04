@@ -48,6 +48,7 @@
     <string name="title_emom_summary_desc">Every %1$s for %2$s with %3$s rest</string>
     <string name="title_are_you_ready">Are you ready?</string>
     <string name="title_tabata_instructions">20 seconds work,\n10 seconds rest</string>
+    <string name="msg_avg">Avg. %1$s</string>
     <plurals name="message_rounds">
         <item quantity="one">round</item>
         <item quantity="other">rounds</item>

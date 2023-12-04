@@ -3,6 +3,7 @@ package me.goldhardt.woderful.presentation.history
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -103,7 +104,10 @@ fun HistoryItem(
         title = {
             Text(text = stringResource(item.type.displayName))
         },
-        time = { Text(item.createdAt.formatDate()) },
+        time = { Text(
+            item.createdAt.formatDate(),
+            style = MaterialTheme.typography.caption3,
+        ) },
     ) {
         Column {
             Row(
@@ -114,19 +118,32 @@ fun HistoryItem(
                     contentDescription = stringResource(id = R.string.title_workout_duration),
                     modifier = Modifier.size(14.dp)
                 )
+                Spacer(modifier = Modifier.size(2.dp))
                 Text(item.durationMs.toMinutesAndSeconds())
-                if (item.avgHeartRate != null && item.avgHeartRate > 0) {
+                if (item.calories != null && item.calories > 0) {
                     Text(" • ")
+                    Text(
+                        "${DecimalFormat(HISTORY_CALS_FORMAT).format(item.calories)} kcals",
+                        style = MaterialTheme.typography.caption1,
+                    )
+                }
+            }
+            if (item.avgHeartRate != null && item.avgHeartRate > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         Icons.Outlined.FavoriteBorder,
                         contentDescription = stringResource(id = R.string.title_workout_duration),
                         modifier = Modifier.size(14.dp)
                     )
-                    Text(DecimalFormat(HISTORY_AVG_HR_FORMAT).format(item.avgHeartRate))
-                }
-                if (item.calories != null && item.calories > 0) {
-                    Text(" • ")
-                    Text("${DecimalFormat(HISTORY_CALS_FORMAT).format(item.calories)} kcals")
+                    Spacer(modifier = Modifier.size(2.dp))
+                    Text(
+                        stringResource(
+                            R.string.msg_avg,
+                            DecimalFormat(HISTORY_AVG_HR_FORMAT).format(item.avgHeartRate)
+                        ),
+                    )
                 }
             }
             if (item.properties != null && item.type == ClockType.EMOM) {

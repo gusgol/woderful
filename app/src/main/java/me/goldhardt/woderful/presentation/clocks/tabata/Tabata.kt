@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.Composable
@@ -16,14 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Picker
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberPickerState
+import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
@@ -33,6 +38,7 @@ import me.goldhardt.woderful.presentation.component.ConfigurationButton
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
 import me.goldhardt.woderful.presentation.component.RoundText
+import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
 /**
  *  To do's
@@ -47,8 +53,7 @@ import me.goldhardt.woderful.presentation.component.RoundText
 internal sealed class TabataFlow {
     object Permissions: TabataFlow()
     object RoundsConfig : TabataFlow()
-    object WorkConfig : TabataFlow()
-    object RestConfig : TabataFlow()
+    object Instructions : TabataFlow()
 }
 
 @Composable
@@ -76,11 +81,14 @@ fun TabataScreen(
                 }
                 TabataFlow.RoundsConfig -> {
                     TabataRoundsConfig {
-                        step = TabataFlow.WorkConfig
+                        step = TabataFlow.Instructions
                     }
                 }
-                TabataFlow.WorkConfig -> Text("Work config")
-                TabataFlow.RestConfig -> Text("Rest config")
+                TabataFlow.Instructions -> {
+                    TabataInstructions() {
+
+                    }
+                }
             }
         }
         ServiceState.Disconnected -> {
@@ -137,5 +145,42 @@ internal fun TabataRoundsConfig(
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+}
+
+@Composable
+fun TabataInstructions(
+    modifier: Modifier = Modifier,
+    onFinished: () -> Unit
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            stringResource(R.string.title_tabata_instructions),
+            style = MaterialTheme.typography.title2,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(12.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Chip(
+            onClick = onFinished,
+            label = {
+                Text(
+                    text = stringResource(R.string.title_are_you_ready),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
+            },
+        )
+    }
+}
+
+@WearPreviewDevices
+@Composable
+fun TabataInstructionsPreview() {
+    WODerfulTheme {
+        TabataInstructions(onFinished = {})
     }
 }

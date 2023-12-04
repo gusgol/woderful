@@ -92,11 +92,17 @@ fun TabataScreen(
 
 private const val TABATA_MAX_ROUNDS = 20
 
+// Tabata's default number of rounds is 4
+private const val TABATA_INITIAL_OPTION = 4 - 1
+
 @Composable
 internal fun TabataRoundsConfig(
     onConfirm: (Int) -> Unit
 ) {
-    val state = rememberPickerState(initialNumberOfOptions = TABATA_MAX_ROUNDS)
+    val state = rememberPickerState(
+        initialNumberOfOptions = TABATA_MAX_ROUNDS,
+        initiallySelectedOption = TABATA_INITIAL_OPTION
+    )
     Scaffold(
         timeText = {
             RoundText(stringResource(R.string.title_how_many_rounds))

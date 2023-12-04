@@ -28,14 +28,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.wear.compose.material.CompactChip
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions.DEFAULT_EXERCISE_PERMISSIONS
@@ -128,12 +127,7 @@ fun ExercisePermissionsLauncher(
     }
 }
 
-@Preview(
-    device = Devices.WEAR_OS_SMALL_ROUND,
-    showSystemUi = true,
-    backgroundColor = 0xff000000,
-    showBackground = true
-)
+@WearPreviewDevices
 @Composable
 fun ExercisePermissionsLauncherPreview() {
     WODerfulTheme {

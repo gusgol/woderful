@@ -13,11 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.rememberPickerState
+import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
 import me.goldhardt.woderful.presentation.component.RoundText
@@ -134,12 +133,7 @@ fun MinutesAndSecondsTimeConfiguration(
 }
 
 
-@Preview(
-    device = Devices.WEAR_OS_SMALL_ROUND,
-    showSystemUi = true,
-    backgroundColor = 0xff000000,
-    showBackground = true
-)
+@WearPreviewDevices
 @Composable
 fun MinutesTimeConfigurationPreview() {
     WODerfulTheme {
@@ -150,12 +144,7 @@ fun MinutesTimeConfigurationPreview() {
     }
 }
 
-@Preview(
-    device = Devices.WEAR_OS_SMALL_ROUND,
-    showSystemUi = true,
-    backgroundColor = 0xff000000,
-    showBackground = true
-)
+@WearPreviewDevices
 @Composable
 fun MinutesAndSecondsTimeConfigurationPreview() {
     WODerfulTheme {

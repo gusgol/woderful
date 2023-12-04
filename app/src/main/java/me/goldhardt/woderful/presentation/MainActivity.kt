@@ -11,8 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -21,6 +19,7 @@ import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.navigation.currentBackStackEntryAsState
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import dagger.hilt.android.AndroidEntryPoint
 import me.goldhardt.woderful.presentation.navigation.MainNavigation
 import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.HOME
@@ -69,7 +68,7 @@ fun WearApp() {
 
 
 
-@Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
+@WearPreviewDevices
 @Composable
 fun DefaultPreview() {
     WearApp()

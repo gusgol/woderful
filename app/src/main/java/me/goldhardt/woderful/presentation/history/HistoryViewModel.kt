@@ -6,7 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.domain.StreamWorkoutsUseCase
 import javax.inject.Inject
 

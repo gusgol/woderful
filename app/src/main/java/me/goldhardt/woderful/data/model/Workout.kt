@@ -1,4 +1,4 @@
-package me.goldhardt.woderful.data
+package me.goldhardt.woderful.data.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -16,10 +16,11 @@ import androidx.room.PrimaryKey
 data class Workout(
     @ColumnInfo(name = "duration_ms") val durationMs: Long,
     @ColumnInfo(name = "type")val type: ClockType,
-    val rounds: Int,
-    val calories: Double?,
-    @ColumnInfo(name = "avg_heart_rate") val avgHeartRate: Double?,
+    @ColumnInfo(name = "rounds") val rounds: Int,
     @ColumnInfo(name = "created_at") val createdAt: Long,
+    @ColumnInfo(name = "calories")val calories: Double?,
+    @ColumnInfo(name = "avg_heart_rate") val avgHeartRate: Double?,
+    @ColumnInfo(name = "properties") val properties: Map<String, Any>? = null
 ) {
 
     @PrimaryKey(autoGenerate = true)

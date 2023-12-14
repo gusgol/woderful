@@ -1,6 +1,5 @@
-package me.goldhardt.woderful.presentation.clocks.amrap
+package me.goldhardt.woderful.presentation.clocks
 
-import android.Manifest
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,23 +12,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.HealthServicesRepository
 import me.goldhardt.woderful.data.ServiceState
-import me.goldhardt.woderful.data.Workout
 import me.goldhardt.woderful.data.local.UserPreferencesRepository
+import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
 import me.goldhardt.woderful.service.ExerciseEvent
-import me.goldhardt.woderful.service.ExerciseServiceState
 import javax.inject.Inject
-
-data class ExerciseScreenState(
-    val hasExerciseCapabilities: Boolean,
-    val isTrackingAnotherExercise: Boolean,
-    val serviceState: ServiceState,
-    val exerciseState: ExerciseServiceState?,
-) {
-    val isEnded: Boolean
-        get() = exerciseState?.exerciseState?.isEnded == true
-}
 
 @HiltViewModel
 class ExerciseViewModel @Inject constructor(
@@ -40,11 +28,6 @@ class ExerciseViewModel @Inject constructor(
 ) : ViewModel() {
 
     var hasShownCounterInstructions = false
-
-    val permissions = arrayOf(
-        Manifest.permission.BODY_SENSORS,
-        Manifest.permission.ACTIVITY_RECOGNITION
-    )
 
     val uiState: StateFlow<ExerciseScreenState> = healthServicesRepository.serviceState.map {
         ExerciseScreenState(

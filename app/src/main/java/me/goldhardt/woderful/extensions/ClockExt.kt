@@ -53,6 +53,15 @@ fun Long.toMinutesAndSeconds(): String {
 }
 
 /**
+ * Converts a number of seconds to a string in the format "mm:ss".
+ */
+fun Int.toMinutesAndSeconds(): String {
+    val minutes = this / 60
+    val seconds = this % 60
+    return MINUTES_AND_SECONDS.format(minutes, seconds)
+}
+
+/**
  * Converts a number of minutes to seconds.
  */
 fun Int.toSeconds(): Long = this * 60L

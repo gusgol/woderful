@@ -1,4 +1,4 @@
-package me.goldhardt.woderful.data
+package me.goldhardt.woderful.data.model
 
 import me.goldhardt.woderful.R
 

@@ -4,7 +4,7 @@ import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import me.goldhardt.woderful.data.Workout
+import me.goldhardt.woderful.data.model.Workout
 
 @Dao
 interface WorkoutDao {

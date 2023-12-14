@@ -1,8 +1,8 @@
 package me.goldhardt.woderful.presentation.component
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.health.services.client.data.DataTypeAvailability
 import androidx.wear.compose.material.Icon
@@ -25,6 +27,7 @@ import me.goldhardt.woderful.R
 fun HeartRateMonitor(
     hr: Double = 0.0,
     availability: DataTypeAvailability = DataTypeAvailability.AVAILABLE,
+    radius: Dp = 28.dp,
 ) {
     val icon = when (availability) {
         DataTypeAvailability.AVAILABLE -> Icons.Default.Favorite
@@ -40,11 +43,10 @@ fun HeartRateMonitor(
     }
 
     CircleContainer(
-        minimumRadius = 24.dp,
+        radius = radius,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(12.dp)
         ) {
             Icon(
                 imageVector = icon,
@@ -56,7 +58,9 @@ fun HeartRateMonitor(
             )
             Text(
                 text = text,
-                style = MaterialTheme.typography.title1
+                style = MaterialTheme.typography.title1,
+                modifier = Modifier.width(radius * 2),
+                textAlign = TextAlign.Center,
             )
         }
     }

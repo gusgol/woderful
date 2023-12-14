@@ -15,6 +15,7 @@
     <string translatable="false" name="tabata">Tabata</string>
     <string translatable="false" name="for_time">For Time</string>
     <string name="title_how_long">How long?</string>
+    <string name="title_every">Every</string>
     <string name="title_heart_monitor">Heart monitor</string>
     <string name="title_not_available">Not available</string>
     <string name="title_no_hr_reading">--</string>
@@ -36,4 +37,20 @@
     <string name="title_yes">Yes</string>
     <string name="title_end_confirm_desc">This will stop your progress and end the workout.</string>
     <string name="title_history">History</string>
+    <string name="title_minutes">Minute(s)</string>
+    <string name="title_seconds">Seconds</string>
+    <string name="title_number_of_rounds">Select the number of rounds</string>
+    <string name="title_how_many_rounds">For how many rounds?</string>
+    <string name="title_rest_question">Rest?</string>
+    <string name="title_rest">Rest</string>
+    <string name="message_warning">Warning</string>
+    <string name="message_permissions">"We need your permission to access body sensors and workout detection."</string>
+    <string name="title_emom_summary_desc">Every %1$s for %2$s with %3$s rest</string>
+    <string name="title_are_you_ready">Are you ready?</string>
+    <string name="title_tabata_instructions">20 seconds work,\n10 seconds rest</string>
+    <string name="msg_avg">Avg. %1$s</string>
+    <plurals name="message_rounds">
+        <item quantity="one">round</item>
+        <item quantity="other">rounds</item>
+    </plurals>
 </resources>

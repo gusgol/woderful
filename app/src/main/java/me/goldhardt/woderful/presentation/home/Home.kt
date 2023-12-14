@@ -26,7 +26,7 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.OutlinedChip
 import androidx.wear.compose.material.Text
 import me.goldhardt.woderful.R
-import me.goldhardt.woderful.data.ClockType
+import me.goldhardt.woderful.data.model.ClockType
 
 @Composable
 fun HomeScreen(

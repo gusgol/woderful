@@ -15,7 +15,7 @@ import androidx.room.PrimaryKey
 @Entity
 data class Workout(
     @ColumnInfo(name = "duration_ms") val durationMs: Long,
-    @ColumnInfo(name = "type")val type: ClockType,
+    @ColumnInfo(name = "type") val type: ClockType,
     @ColumnInfo(name = "rounds") val rounds: Int,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "calories")val calories: Double?,

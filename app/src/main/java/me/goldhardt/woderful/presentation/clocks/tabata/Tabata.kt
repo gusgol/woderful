@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
@@ -44,7 +43,10 @@ import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
+import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
+import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
@@ -58,7 +60,11 @@ import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
 import me.goldhardt.woderful.presentation.component.RoundText
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
+import me.goldhardt.woderful.presentation.component.SummaryScreen
+import me.goldhardt.woderful.presentation.component.defaultSummarySections
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import me.goldhardt.woderful.service.ExerciseEvent
+import java.util.Date
 
 /**
  *  To do's
@@ -75,6 +81,9 @@ internal sealed class TabataFlow {
     object RoundsConfig : TabataFlow()
     object Instructions : TabataFlow()
     object Tracker : TabataFlow()
+    data class Summary(
+        val workout: Workout,
+    ) : TabataFlow()
 }
 
 internal object TabataConfiguration {
@@ -82,6 +91,8 @@ internal object TabataConfiguration {
     const val REST_TIME_MS = 10_000
     const val MAX_ROUNDS = 20
     const val INITIAL_OPTION = 4 - 1
+
+    fun getTotalDurationS(): Long = (WORK_TIME_MS + REST_TIME_MS) / 1_000L
 }
 
 @Composable
@@ -103,10 +114,6 @@ fun TabataScreen(
 
     when (uiState.serviceState) {
         is ServiceState.Connected -> {
-            LaunchedEffect(Unit) {
-                viewModel.prepareExercise()
-            }
-
             when (step) {
                 TabataFlow.Permissions -> {
                     ExercisePermissionsLauncher {
@@ -120,18 +127,31 @@ fun TabataScreen(
                     }
                 }
                 TabataFlow.Instructions -> {
-                    TabataInstructions() {
+                    TabataInstructions {
+                        val totalTimeS = rounds * TabataConfiguration.getTotalDurationS()
+                        viewModel.startExercise(totalTimeS)
                         step = TabataFlow.Tracker
                     }
                 }
                 TabataFlow.Tracker -> {
-                    LaunchedEffect(Unit) {
-                        val totalTimeS = rounds * ((TabataConfiguration.WORK_TIME_MS + TabataConfiguration.REST_TIME_MS) / 1000)
-                        viewModel.startExercise(totalTimeS.toLong())
-                    }
                     TabataTracker(
                         rounds = rounds,
                         uiState = uiState
+                    ) {
+                        with(viewModel) {
+                            insertWorkout(it)
+                            endExercise()
+                        }
+                        step = TabataFlow.Summary(it)
+                    }
+                }
+                is TabataFlow.Summary -> {
+                    val workout = (step as TabataFlow.Summary).workout
+                    TabataSummary(
+                        duration = workout.durationMs.toMinutesAndSeconds(),
+                        roundCount = workout.rounds,
+                        calories = workout.calories,
+                        avgHeartRate = workout.avgHeartRate?.toInt(),
                     )
                 }
             }
@@ -221,10 +241,11 @@ fun TabataInstructions(
 internal fun TabataTracker(
     rounds: Int,
     uiState: ExerciseScreenState,
+    onFinished: (Workout) -> Unit,
 ) {
     val metrics = uiState.exerciseState?.exerciseMetrics
 
-    val totalRoundTimeMs = (TabataConfiguration.REST_TIME_MS + TabataConfiguration.WORK_TIME_MS).toFloat()
+    val totalRoundTimeMs = TabataConfiguration.getTotalDurationS() * 1_000F
     val activeSegmentWeight = TabataConfiguration.WORK_TIME_MS / totalRoundTimeMs
     val restSegmentWeight = TabataConfiguration.REST_TIME_MS / totalRoundTimeMs
 
@@ -274,7 +295,24 @@ internal fun TabataTracker(
 
     val completedRounds = (progress * rounds).toInt()
 
-    StopWorkoutContainer(onConfirm = {}) {
+    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
+        onFinished(
+            Workout(
+                durationMs = elapsedTimeMs,
+                type = ClockType.TABATA,
+                rounds = completedRounds,
+                calories = metrics?.calories,
+                avgHeartRate = metrics?.heartRateAverage,
+                createdAt = Date().time,
+            )
+        )
+    }
+
+    StopWorkoutContainer(
+        onConfirm = {
+
+        },
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -322,6 +360,16 @@ internal fun TabataTracker(
     }
 }
 
+@Composable
+internal fun TabataSummary(
+    duration: String,
+    roundCount: Int,
+    calories: Double?,
+    avgHeartRate: Int?,
+) {
+    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate))
+}
+
 private fun isInActiveInterval(
     totalRoundTimeMs: Float,
     activeRoundDuration: Long,
@@ -338,7 +386,8 @@ fun TabataTrackerPreview() {
         TabataTracker(
             rounds = 5,
             uiState = FakeExerciseScreenState(),
-        )
+        ) {
+        }
     }
 }
 

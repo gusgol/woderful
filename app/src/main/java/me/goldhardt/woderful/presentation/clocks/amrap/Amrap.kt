@@ -374,7 +374,10 @@ internal fun AmrapTracker(
                     style = MaterialTheme.typography.caption1
                 )
                 Duration(uiState = uiState)
-                Row(horizontalArrangement = Arrangement.Center) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     HeartRateMonitor(hr = heartRate)
                     Spacer(modifier = Modifier.width(16.dp))
                     RoundsCounter(roundCount)

@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -199,7 +199,7 @@ internal fun TabataRoundsConfig(
                 onConfirm = {
                     onConfirm(state.selectedOption + 1)
                 },
-                icon = Icons.Filled.ArrowForward,
+                icon = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = stringResource(R.string.action_confirm),
             )
             Spacer(modifier = Modifier.height(8.dp))

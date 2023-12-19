@@ -2,6 +2,7 @@ package me.goldhardt.woderful.data
 
 import android.util.Log
 import androidx.concurrent.futures.await
+import androidx.health.services.client.ExerciseClient
 import androidx.health.services.client.ExerciseUpdateCallback
 import androidx.health.services.client.HealthServicesClient
 import androidx.health.services.client.data.Availability
@@ -16,6 +17,7 @@ import androidx.health.services.client.data.ExerciseTypeCapabilities
 import androidx.health.services.client.data.ExerciseUpdate
 import androidx.health.services.client.data.WarmUpConfig
 import androidx.health.services.client.getCapabilities
+import androidx.health.services.client.prepareExercise
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
@@ -28,32 +30,7 @@ import javax.inject.Singleton
 class ExerciseClientManager @Inject constructor(
     healthServicesClient: HealthServicesClient,
 ) {
-    val exerciseClient = healthServicesClient.exerciseClient
-
-    val exerciseUpdateFlow = callbackFlow {
-        val callback = object : ExerciseUpdateCallback {
-            override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
-                trySendBlocking(ExerciseInfo.ExerciseUpdateInfo(update))
-            }
-
-            override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {
-                trySendBlocking(ExerciseInfo.LapSummaryInfo(lapSummary))
-            }
-
-            override fun onRegistered() {}
-
-            override fun onRegistrationFailed(throwable: Throwable) {}
-
-            override fun onAvailabilityChanged(
-                dataType: DataType<*, *>,
-                availability: Availability,
-            ) {}
-        }
-        exerciseClient.setUpdateCallback(callback)
-        awaitClose {
-            exerciseClient.clearUpdateCallbackAsync(callback)
-        }
-    }
+    val exerciseClient: ExerciseClient = healthServicesClient.exerciseClient
 
     suspend fun getExerciseCapabilities(): ExerciseTypeCapabilities? {
         val capabilities = exerciseClient.getCapabilities()
@@ -66,7 +43,7 @@ class ExerciseClientManager @Inject constructor(
     }
 
     suspend fun startExercise(totalDurationTimeGoalS: Long, ) {
-        Log.d(OUTPUT, "Starting exercise")
+        Log.d(OUTPUT, "Starting exercise for $totalDurationTimeGoalS seconds")
 
         val capabilities = getExerciseCapabilities() ?: return
         val dataTypes = setOf(
@@ -84,7 +61,7 @@ class ExerciseClientManager @Inject constructor(
         )
 
         // TODO Need to change this for other workout types
-        val intervalThreshold = 60L
+        val intervalThreshold = 15L
 
         val intervalGoal = ExerciseGoal.createMilestone(
             condition = DataTypeCondition(
@@ -102,7 +79,7 @@ class ExerciseClientManager @Inject constructor(
             isGpsEnabled = false,
             exerciseGoals = listOf(totalTimeGoal, intervalGoal)
         )
-        exerciseClient.startExerciseAsync(config).await()
+        exerciseClient.startExerciseAsync(config)
     }
 
     suspend fun prepareExercise() {
@@ -113,7 +90,7 @@ class ExerciseClientManager @Inject constructor(
             dataTypes = setOf(DataType.HEART_RATE_BPM)
         )
         try {
-            exerciseClient.prepareExerciseAsync(warmUpConfig).await()
+            exerciseClient.prepareExercise(warmUpConfig)
         } catch (e: Exception) {
             Log.e(OUTPUT, "Prepare exercise failed - ${e.message}")
         }
@@ -137,6 +114,35 @@ class ExerciseClientManager @Inject constructor(
     suspend fun markLap() {
         if (exerciseClient.isExerciseInProgress()) {
             exerciseClient.markLapAsync().await()
+        }
+    }
+
+    val exerciseUpdateFlow = callbackFlow {
+        val callback = object : ExerciseUpdateCallback {
+            override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
+                trySendBlocking(ExerciseInfo.ExerciseUpdateInfo(update))
+            }
+
+            override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {
+                Log.e("Updates", "onLapSummaryReceived: ${lapSummary.toString()}")
+                trySendBlocking(ExerciseInfo.LapSummaryInfo(lapSummary))
+            }
+
+            override fun onRegistered() {
+            }
+
+            override fun onRegistrationFailed(throwable: Throwable) {
+            }
+
+            override fun onAvailabilityChanged(
+                dataType: DataType<*, *>,
+                availability: Availability,
+            ) {
+            }
+        }
+        exerciseClient.setUpdateCallback(callback)
+        awaitClose {
+            exerciseClient.clearUpdateCallbackAsync(callback)
         }
     }
 

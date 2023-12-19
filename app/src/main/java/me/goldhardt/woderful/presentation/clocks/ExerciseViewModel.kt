@@ -63,7 +63,6 @@ class ExerciseViewModel @Inject constructor(
 
     init {
         getUserPreferences()
-        healthServicesRepository.createService()
     }
 
     suspend fun isExerciseInProgress(): Boolean {

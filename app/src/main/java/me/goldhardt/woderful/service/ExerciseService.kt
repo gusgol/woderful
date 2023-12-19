@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,7 @@ import me.goldhardt.woderful.data.ExerciseClientManager
 import me.goldhardt.woderful.data.ExerciseInfo
 import me.goldhardt.woderful.extensions.isExerciseInProgress
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 
 @AndroidEntryPoint
@@ -96,19 +98,17 @@ class ExerciseService : LifecycleService() {
             }
             lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    launch {
-                        exerciseClientManager.exerciseUpdateFlow.collect {
-                            when (it) {
-                                is ExerciseInfo.ExerciseUpdateInfo ->
-                                    processExerciseUpdate(it.exerciseUpdate)
+                    exerciseClientManager.exerciseUpdateFlow.collect {
+                        when (it) {
+                            is ExerciseInfo.ExerciseUpdateInfo ->
+                                processExerciseUpdate(it.exerciseUpdate)
 
-                                is ExerciseInfo.LapSummaryInfo ->
-                                    _exerciseServiceState.update { oldState ->
-                                        oldState.copy(
-                                            exerciseLaps = it.lapSummary.lapCount
-                                        )
-                                    }
-                            }
+                            is ExerciseInfo.LapSummaryInfo ->
+                                _exerciseServiceState.update { oldState ->
+                                    oldState.copy(
+                                        exerciseLaps = it.lapSummary.lapCount
+                                    )
+                                }
                         }
                     }
                 }
@@ -188,9 +188,6 @@ class ExerciseService : LifecycleService() {
     override fun onUnbind(intent: Intent?): Boolean {
         isBound = false
         lifecycleScope.launch {
-            // Client can unbind because it went through a configuration change, in which case it
-            // will be recreated and bind again shortly. Wait a few seconds, and if still not bound,
-            // manage our lifetime accordingly.
             delay(UNBIND_DELAY_MILLIS)
             if (!isBound) {
                 stopSelfIfNotRunning()
@@ -202,9 +199,12 @@ class ExerciseService : LifecycleService() {
     /** Local clients will use this to access the service. */
     inner class LocalBinder : Binder() {
         fun getService() = this@ExerciseService
+
+        val exerciseServiceState: Flow<ExerciseServiceState>
+            get() = this@ExerciseService.exerciseServiceState
     }
 
     companion object {
-        private const val UNBIND_DELAY_MILLIS = 3_000L
+        private val UNBIND_DELAY_MILLIS = 3.seconds
     }
 }

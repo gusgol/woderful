@@ -21,6 +21,8 @@ import androidx.health.services.client.prepareExercise
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
+import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.isExerciseInProgress
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,8 +44,16 @@ class ExerciseClientManager @Inject constructor(
         }
     }
 
-    suspend fun startExercise(totalDurationTimeGoalS: Long, ) {
-        Log.d(OUTPUT, "Starting exercise for $totalDurationTimeGoalS seconds")
+    suspend fun startExercise(
+        clockType: ClockType,
+        workoutConfiguration: WorkoutConfiguration
+    ) {
+        val workoutDurationS = workoutConfiguration.getTotalDurationS()
+
+        Log.d(
+            OUTPUT,
+            "Starting exercise for $workoutDurationS seconds"
+        )
 
         val capabilities = getExerciseCapabilities() ?: return
         val dataTypes = setOf(
@@ -55,13 +65,12 @@ class ExerciseClientManager @Inject constructor(
         val totalTimeGoal = ExerciseGoal.createOneTimeGoal(
             condition = DataTypeCondition(
                 dataType = DataType.ACTIVE_EXERCISE_DURATION_TOTAL,
-                threshold = totalDurationTimeGoalS,
+                threshold = workoutDurationS,
                 comparisonType = ComparisonType.GREATER_THAN_OR_EQUAL
             )
         )
 
-        // TODO Need to change this for other workout types
-        val intervalThreshold = 15L
+        val intervalThreshold = clockType.getThresholdS(workoutConfiguration)
 
         val intervalGoal = ExerciseGoal.createMilestone(
             condition = DataTypeCondition(

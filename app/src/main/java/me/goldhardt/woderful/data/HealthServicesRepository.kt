@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.di.bindService
 import me.goldhardt.woderful.extensions.isExerciseInProgress
 import me.goldhardt.woderful.extensions.isTrackingExerciseInAnotherApp
@@ -56,8 +58,9 @@ class HealthServicesRepository @Inject constructor(
     }
 
     fun startExercise(
-        totalDurationTimeGoalS: Long
-    ) = serviceCall { startExercise(totalDurationTimeGoalS) }
+        clockType: ClockType,
+        workoutConfiguration: WorkoutConfiguration
+    ) = serviceCall { startExercise(clockType, workoutConfiguration) }
     fun pauseExercise() = serviceCall { pauseExercise() }
     fun endExercise() = serviceCall { endExercise() }
     fun resumeExercise() = serviceCall { resumeExercise() }

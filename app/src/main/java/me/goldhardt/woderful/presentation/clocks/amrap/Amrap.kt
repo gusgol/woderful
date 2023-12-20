@@ -33,10 +33,10 @@ import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
 import me.goldhardt.woderful.data.model.Workout
+import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
-import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions.DEFAULT_EXERCISE_PERMISSIONS
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
@@ -49,6 +49,7 @@ import me.goldhardt.woderful.presentation.component.SummaryScreen
 import me.goldhardt.woderful.presentation.component.defaultSummarySections
 import me.goldhardt.woderful.service.ExerciseEvent
 import java.util.Date
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * To do's:
@@ -71,7 +72,13 @@ internal sealed class AmrapFlow {
     ) : AmrapFlow()
 }
 
-const val DEFAULT_AMRAP_TIME = 10
+class AmrapConfiguration(
+    activeTimeS: Long
+) : WorkoutConfiguration(
+    activeTimeS = activeTimeS,
+    restTimeS = 0,
+    rounds = 1,
+)
 
 @SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalPermissionsApi::class)
@@ -83,7 +90,7 @@ fun AmrapScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     var step: AmrapFlow by remember { mutableStateOf(AmrapFlow.TimeConfig) }
-    var durationGoalMin by remember { mutableIntStateOf(DEFAULT_AMRAP_TIME) }
+    var config by remember { mutableStateOf(AmrapConfiguration(0L)) }
 
     if (uiState.isEnded) {
         // TODO act accordingly
@@ -101,7 +108,7 @@ fun AmrapScreen(
                     AmrapConfiguration(
                         DEFAULT_EXERCISE_PERMISSIONS,
                         onConfirm = { selectedTime ->
-                            durationGoalMin = selectedTime
+                            config = AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
                             step = if (viewModel.hasShownCounterInstructions) {
                                 AmrapFlow.Tracker
                             } else {
@@ -123,10 +130,10 @@ fun AmrapScreen(
                 }
                 AmrapFlow.Tracker -> {
                     LaunchedEffect(Unit) {
-                        viewModel.startExercise(durationGoalMin.toSeconds())
+                        viewModel.startExercise(ClockType.AMRAP, config)
                     }
                     AmrapTracker(
-                        durationMin = durationGoalMin,
+                        durationS = config.getTotalDurationS(),
                         uiState = uiState,
                     ) { workout ->
                         viewModel.endExercise()
@@ -278,14 +285,14 @@ internal fun AmrapConfiguration(
 @OptIn(ExperimentalHorologistApi::class)
 @Composable
 internal fun AmrapTracker(
-    durationMin: Int,
+    durationS: Long,
     uiState: ExerciseScreenState,
     onFinished: (Workout) -> Unit = {},
 ) {
     val metrics = uiState.exerciseState?.exerciseMetrics
 
     val segments = mutableListOf<ProgressIndicatorSegment>()
-    repeat(durationMin) {
+    repeat(durationS.toInt() / 60) {
         segments.add(
             ProgressIndicatorSegment(
                 weight = 1f,
@@ -305,7 +312,7 @@ internal fun AmrapTracker(
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
         label = "Progress"
     )
-    progress = elapsedTimeMs / (durationMin * 60 * 1000).toFloat()
+    progress = elapsedTimeMs / (durationS * 1000).toFloat()
 
     var roundCount by remember { mutableIntStateOf(0) }
 

@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.data.ExerciseClientManager
 import me.goldhardt.woderful.data.ExerciseInfo
+import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.isExerciseInProgress
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -52,8 +54,11 @@ class ExerciseService : LifecycleService() {
     /**
      * Start exercise in this service's coroutine context.
      */
-    suspend fun startExercise(totalDurationTimeGoalS: Long) {
-        exerciseClientManager.startExercise(totalDurationTimeGoalS)
+    suspend fun startExercise(
+        clockType: ClockType,
+        workoutConfiguration: WorkoutConfiguration
+    ) {
+        exerciseClientManager.startExercise(clockType, workoutConfiguration)
     }
 
     /**

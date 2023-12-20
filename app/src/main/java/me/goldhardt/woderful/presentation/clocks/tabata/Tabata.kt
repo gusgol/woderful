@@ -48,6 +48,7 @@ import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
+import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
@@ -289,11 +290,7 @@ internal fun TabataTracker(
     }
 
     var isInActiveInterval by remember { mutableStateOf(true) }
-    isInActiveInterval = isInActiveInterval(
-        totalRoundTimeMs = roundTimeMs,
-        activeRoundDuration = configuration.activeTimeS * 1_000,
-        elapsedTimeMs = elapsedTimeMs
-    )
+    isInActiveInterval = configuration.isInActiveInterval(elapsedTimeMs.toSeconds())
 
     val completedRounds = (progress * configuration.rounds).toInt()
 
@@ -375,15 +372,6 @@ internal fun TabataSummary(
 ) {
     SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate))
 }
-
-private fun isInActiveInterval(
-    totalRoundTimeMs: Float,
-    activeRoundDuration: Long,
-    elapsedTimeMs: Long): Boolean {
-    val roundTimeS = elapsedTimeMs % totalRoundTimeMs
-    return roundTimeS < activeRoundDuration
-}
-
 
 @WearPreviewDevices
 @Composable

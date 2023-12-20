@@ -54,6 +54,7 @@ import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
+import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
@@ -308,7 +309,7 @@ internal fun EmomTracker(
     }
 
     var isInActiveInterval by remember { mutableStateOf(true) }
-    isInActiveInterval = isInActiveInterval(configuration, elapsedTimeMs)
+    isInActiveInterval = configuration.isInActiveInterval(elapsedTimeMs.toSeconds())
 
     val completedRounds = (progress * configuration.rounds).toInt()
 
@@ -459,12 +460,6 @@ fun RoundMonitor(
             )
         }
     }
-}
-
-private fun isInActiveInterval(configuration: WorkoutConfiguration, elapsedTimeMs: Long): Boolean {
-    val totalRoundTimeMs = (configuration.activeTimeS + configuration.restTimeS)
-    val roundTimeS = (elapsedTimeMs / 1_000) % totalRoundTimeMs
-    return roundTimeS < configuration.activeTimeS
 }
 
 @WearPreviewDevices

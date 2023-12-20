@@ -62,6 +62,11 @@ fun Int.toMinutesAndSeconds(): String {
 }
 
 /**
+ * Converts a number of milliseconds to seconds.
+ */
+fun Long.toSeconds(): Long = this / 1000
+
+/**
  * Converts a number of minutes to seconds.
  */
 fun Int.toSeconds(): Long = this * 60L

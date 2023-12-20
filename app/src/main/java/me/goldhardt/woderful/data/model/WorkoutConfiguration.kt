@@ -18,4 +18,13 @@ open class WorkoutConfiguration(
     fun getTotalDurationS(): Long {
         return rounds * (activeTimeS + restTimeS)
     }
+
+    /**
+     * Returns whether the given time is in the active interval.
+     */
+    fun isInActiveInterval(elapseTimeS: Long): Boolean {
+        val roundTime = activeTimeS + restTimeS
+        val timeAtRound = elapseTimeS % roundTime
+        return timeAtRound < activeTimeS
+    }
 }

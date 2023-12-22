@@ -10,7 +10,7 @@ enum class ClockType(
 
     AMRAP(R.string.amrap, R.drawable.img_wod_1) {
         override fun getThresholdS(configuration: WorkoutConfiguration): Long {
-            return 60.seconds.inWholeMinutes
+            return 60.seconds.inWholeSeconds
         }
     },
 
@@ -28,7 +28,7 @@ enum class ClockType(
 
     FOR_TIME(R.string.for_time, R.drawable.img_wod_4) {
         override fun getThresholdS(configuration: WorkoutConfiguration): Long {
-            return 60.seconds.inWholeMinutes
+            return 60.seconds.inWholeSeconds
         }
     },
 }

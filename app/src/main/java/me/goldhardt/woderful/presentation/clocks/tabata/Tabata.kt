@@ -1,6 +1,7 @@
 package me.goldhardt.woderful.presentation.clocks.tabata
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -239,7 +240,7 @@ fun TabataInstructions(
     }
 }
 
-@OptIn(ExperimentalHorologistApi::class)
+@OptIn(ExperimentalHorologistApi::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun TabataTracker(
     configuration: TabataConfiguration,

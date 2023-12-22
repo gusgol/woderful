@@ -12,12 +12,13 @@ import androidx.wear.compose.material.MaterialTheme
 
 @Composable
 fun CircleContainer(
+    modifier: Modifier = Modifier,
     circleColor: Color = MaterialTheme.colors.surface,
     radius: Dp? = null,
     minimumRadius: Dp = 24.dp,
     content: @Composable () -> Unit
 ) {
-    Box(modifier = Modifier.drawWithContent {
+    Box(modifier = modifier.drawWithContent {
         val circleRadius = radius?.toPx()
             ?: maxOf(
                 minimumRadius.toPx(),

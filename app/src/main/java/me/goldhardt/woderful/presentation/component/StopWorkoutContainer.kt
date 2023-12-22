@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FrontHand
@@ -22,6 +23,7 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.dialog.Alert
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
 
@@ -49,14 +51,13 @@ internal const val NUMBER_OF_PAGES = 1
 @Composable
 fun StopWorkoutContainer(
     onConfirm: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val pagerState = rememberPagerState(
+    pagerState: PagerState = rememberPagerState(
         initialPage = INITIAL_PAGE,
         pageCount = { PAGE_COUNT }
-    )
-    val coroutineScope = rememberCoroutineScope()
-
+    ),
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    content: @Composable () -> Unit,
+) {
     BackHandler {
         coroutineScope.launch {
             pagerState.scrollToPage(STOP_PAGE)

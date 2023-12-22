@@ -3,6 +3,7 @@
 package me.goldhardt.woderful.presentation.clocks.emom
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,7 +81,7 @@ import kotlin.time.Duration.Companion.seconds
  * Represents the flow of the Emom workout configuration.
  */
 internal sealed class EmomFlow {
-    object Permissions: EmomFlow()
+    object Permissions : EmomFlow()
     object TimeConfig : EmomFlow()
     object RoundsConfig : EmomFlow()
     object RestConfig : EmomFlow()
@@ -256,7 +257,7 @@ internal fun EmomRestConfiguration(
     }
 }
 
-@OptIn(ExperimentalHorologistApi::class)
+@OptIn(ExperimentalHorologistApi::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun EmomTracker(
     configuration: WorkoutConfiguration,

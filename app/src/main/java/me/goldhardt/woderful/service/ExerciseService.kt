@@ -2,7 +2,9 @@ package me.goldhardt.woderful.service
 
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.health.services.client.data.ExerciseState
@@ -24,6 +26,7 @@ import me.goldhardt.woderful.data.ExerciseInfo
 import me.goldhardt.woderful.data.model.ClockType
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.isExerciseInProgress
+import java.time.Duration
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
@@ -34,15 +37,25 @@ class ExerciseService : LifecycleService() {
     @Inject
     lateinit var exerciseClientManager: ExerciseClientManager
 
+    @Inject
+    lateinit var exerciseNotificationManager: ExerciseNotificationManager
+
     private var isBound = false
     private var isStarted = false
     private val localBinder = LocalBinder()
 
-    private val _exerciseServiceState = MutableStateFlow(ExerciseServiceState())
-    val exerciseServiceState: StateFlow<ExerciseServiceState> = _exerciseServiceState.asStateFlow()
-
     private suspend fun isExerciseInProgress() =
         exerciseClientManager.exerciseClient.isExerciseInProgress()
+
+    private val serviceRunningInForeground: Boolean
+        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            this.foregroundServiceType != ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+        } else {
+            this.foregroundServiceType != ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE
+        }
+
+    private val _exerciseServiceState = MutableStateFlow(ExerciseServiceState())
+    val exerciseServiceState: StateFlow<ExerciseServiceState> = _exerciseServiceState.asStateFlow()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -111,6 +124,7 @@ class ExerciseService : LifecycleService() {
         clockType: ClockType,
         workoutConfiguration: WorkoutConfiguration
     ) {
+        postOngoingActivityNotification(clockType)
         exerciseClientManager.startExercise(clockType, workoutConfiguration)
     }
 
@@ -133,6 +147,7 @@ class ExerciseService : LifecycleService() {
      */
     suspend fun endExercise() {
         exerciseClientManager.endExercise()
+        removeOngoingActivityNotification()
     }
 
 
@@ -157,20 +172,9 @@ class ExerciseService : LifecycleService() {
     }
 
     private fun processExerciseUpdate(exerciseUpdate: ExerciseUpdate) {
-        /**
-         * TODO - react different for different end reasons.
-         *
-         * This is how to check for end reason:
-         *      when (exerciseUpdate.exerciseStateInfo.endReason) {
-         *          ExerciseEndReason.AUTO_END_SUPERSEDED -> {
-         *     ...
-         *
-         * TODO - in case we have an active notification, this is where we would remove it.
-         *
-         * How to check if exercise is ended:
-         *
-         *      exerciseUpdate.exerciseStateInfo.state.isEnded
-         */
+        if (exerciseUpdate.exerciseStateInfo.state.isEnded) {
+            removeOngoingActivityNotification()
+        }
 
         _exerciseServiceState.update { old ->
             old.copy(
@@ -197,6 +201,31 @@ class ExerciseService : LifecycleService() {
         if (!isBound) {
             isBound = true
             startService(Intent(this, this::class.java))
+        }
+    }
+
+    private fun postOngoingActivityNotification(
+        clockType: ClockType,
+    ) {
+        if (!serviceRunningInForeground) {
+            Log.d(TAG, "Posting ongoing activity notification")
+
+            exerciseNotificationManager.createNotificationChannel()
+            val serviceState = exerciseServiceState.value
+            startForeground(
+                ExerciseNotificationManager.NOTIFICATION_ID,
+                exerciseNotificationManager.buildNotification(
+                    clockType,
+                    serviceState.activeDurationCheckpoint?.activeDuration ?: Duration.ZERO
+                )
+            )
+        }
+    }
+
+    fun removeOngoingActivityNotification() {
+        if (serviceRunningInForeground) {
+            Log.d(TAG, "Removing ongoing activity notification")
+            stopForeground(STOP_FOREGROUND_REMOVE)
         }
     }
 

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,14 +48,17 @@ import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 
 object ExercisePermissions {
 
-    val DEFAULT_EXERCISE_PERMISSIONS = arrayOf(
+    val DEFAULT_EXERCISE_PERMISSIONS = mutableListOf(
         Manifest.permission.BODY_SENSORS,
-        Manifest.permission.ACTIVITY_RECOGNITION
-    )
+        Manifest.permission.ACTIVITY_RECOGNITION,
+    ).apply {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            this.add(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     fun hasPermissions(
         context: Context,
-        permissions: Array<String> = DEFAULT_EXERCISE_PERMISSIONS,
+        permissions: List<String> = DEFAULT_EXERCISE_PERMISSIONS,
     ): Boolean {
         return permissions.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
@@ -65,7 +69,7 @@ object ExercisePermissions {
 
 @Composable
 fun ExercisePermissionsLauncher(
-    permissions: Array<String> = DEFAULT_EXERCISE_PERMISSIONS,
+    permissions: List<String> = DEFAULT_EXERCISE_PERMISSIONS,
     granted: () -> Unit,
 ) {
 
@@ -88,7 +92,7 @@ fun ExercisePermissionsLauncher(
 
     LaunchedEffect(Unit) {
         launch {
-            permissionLauncher.launch(permissions)
+            permissionLauncher.launch(permissions.toTypedArray())
         }
     }
 

@@ -56,4 +56,6 @@
         <item quantity="one">round</item>
         <item quantity="other">rounds</item>
     </plurals>
+    <string name="title_wod_wip">Workout in progress</string>
+
 </resources>

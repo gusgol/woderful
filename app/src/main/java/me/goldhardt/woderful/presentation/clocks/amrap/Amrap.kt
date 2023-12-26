@@ -261,7 +261,7 @@ internal fun AmrapInstructions(
 @ExperimentalPermissionsApi
 @Composable
 internal fun AmrapConfiguration(
-    permissions: Array<String>,
+    permissions: List<String>,
     onConfirm: (Int) -> Unit = {}
 ) {
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -274,7 +274,7 @@ internal fun AmrapConfiguration(
 
     LaunchedEffect(Unit) {
         launch {
-            permissionLauncher.launch(permissions)
+            permissionLauncher.launch(permissions.toTypedArray())
         }
     }
 

@@ -44,6 +44,59 @@ class ExerciseService : LifecycleService() {
     private suspend fun isExerciseInProgress() =
         exerciseClientManager.exerciseClient.isExerciseInProgress()
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        Log.d(TAG, "onStartCommand")
+
+        if (!isStarted) {
+            isStarted = true
+
+            if (!isBound) {
+                stopSelfIfNotRunning()
+            }
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    exerciseClientManager.exerciseUpdateFlow.collect {
+                        when (it) {
+                            is ExerciseInfo.ExerciseUpdateInfo ->
+                                processExerciseUpdate(it.exerciseUpdate)
+
+                            is ExerciseInfo.LapSummaryInfo ->
+                                _exerciseServiceState.update { oldState ->
+                                    oldState.copy(
+                                        exerciseLaps = it.lapSummary.lapCount
+                                    )
+                                }
+                        }
+                    }
+                }
+            }
+        }
+        return START_STICKY
+    }
+
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
+        handleBind()
+        return localBinder
+    }
+
+    override fun onRebind(intent: Intent?) {
+        super.onRebind(intent)
+        handleBind()
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        isBound = false
+        lifecycleScope.launch {
+            delay(UNBIND_DELAY_MILLIS)
+            if (!isBound) {
+                stopSelfIfNotRunning()
+            }
+        }
+        return true
+    }
+
     /**
      * Prepare exercise in this service's coroutine context.
      */
@@ -88,38 +141,6 @@ class ExerciseService : LifecycleService() {
      */
     suspend fun markLap() {
         exerciseClientManager.markLap()
-    }
-
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        Log.d(TAG, "onStartCommand")
-
-        if (!isStarted) {
-            isStarted = true
-
-            if (!isBound) {
-                stopSelfIfNotRunning()
-            }
-            lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    exerciseClientManager.exerciseUpdateFlow.collect {
-                        when (it) {
-                            is ExerciseInfo.ExerciseUpdateInfo ->
-                                processExerciseUpdate(it.exerciseUpdate)
-
-                            is ExerciseInfo.LapSummaryInfo ->
-                                _exerciseServiceState.update { oldState ->
-                                    oldState.copy(
-                                        exerciseLaps = it.lapSummary.lapCount
-                                    )
-                                }
-                        }
-                    }
-                }
-            }
-        }
-        return START_STICKY
     }
 
     private fun stopSelfIfNotRunning() {
@@ -172,33 +193,11 @@ class ExerciseService : LifecycleService() {
             null
         }
 
-    override fun onBind(intent: Intent): IBinder {
-        super.onBind(intent)
-        handleBind()
-        return localBinder
-    }
-
-    override fun onRebind(intent: Intent?) {
-        super.onRebind(intent)
-        handleBind()
-    }
-
     private fun handleBind() {
         if (!isBound) {
             isBound = true
             startService(Intent(this, this::class.java))
         }
-    }
-
-    override fun onUnbind(intent: Intent?): Boolean {
-        isBound = false
-        lifecycleScope.launch {
-            delay(UNBIND_DELAY_MILLIS)
-            if (!isBound) {
-                stopSelfIfNotRunning()
-            }
-        }
-        return true
     }
 
     /** Local clients will use this to access the service. */

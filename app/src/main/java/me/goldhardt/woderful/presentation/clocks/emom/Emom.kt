@@ -106,7 +106,8 @@ fun WorkoutConfiguration.toProperties(): Map<String, Any> {
 
 @Composable
 fun EmomScreen(
-    viewModel: ExerciseViewModel = hiltViewModel()
+    viewModel: ExerciseViewModel = hiltViewModel(),
+    onClose: () -> Unit = {},
 ) {
     // Data state 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -176,6 +177,7 @@ fun EmomScreen(
                         calories = workout.calories,
                         avgHeartRate = workout.avgHeartRate?.toInt(),
                         configuration = summary.configuration,
+                        onClose = onClose,
                     )
                 }
             }
@@ -391,6 +393,7 @@ internal fun EmomSummary(
     roundCount: Int,
     calories: Double?,
     avgHeartRate: Int?,
+    onClose: () -> Unit = {},
 ) {
     val roundsDescription =
         "${configuration.rounds} ${pluralStringResource(id = R.plurals.message_rounds, count = configuration.rounds)}"
@@ -402,6 +405,7 @@ internal fun EmomSummary(
     )
     SummaryScreen(
         defaultSummarySections(duration, roundCount, calories, avgHeartRate),
+        onClose = onClose,
         descriptionSlot = {
             Card(
                 onClick = {},
@@ -423,7 +427,7 @@ internal fun EmomSummary(
                     )
                 }
             }
-        }
+        },
     )
 }
 

@@ -51,6 +51,7 @@
     <string name="title_tabata_instructions">20 seconds work,\n10 seconds rest</string>
     <string name="msg_avg">Avg. %1$s</string>
     <string name="title_time_cap">Time cap?</string>
+    <string name="action_close">Close</string>
     <plurals name="message_rounds">
         <item quantity="one">round</item>
         <item quantity="other">rounds</item>

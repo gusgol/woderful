@@ -74,7 +74,8 @@ import java.util.Date
 
 @Composable
 fun ForTimeScreen(
-    viewModel: ExerciseViewModel = hiltViewModel()
+    viewModel: ExerciseViewModel = hiltViewModel(),
+    onClose: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -130,7 +131,8 @@ fun ForTimeScreen(
                     ForTimeSummary(
                         duration = workout.durationMs.toMinutesAndSeconds(),
                         calories = workout.calories,
-                        avgHeartRate = workout.avgHeartRate?.toInt()
+                        avgHeartRate = workout.avgHeartRate?.toInt(),
+                        onClose = onClose,
                     )
                 }
             }
@@ -261,6 +263,7 @@ internal fun ForTimeSummary(
     duration: String,
     calories: Double?,
     avgHeartRate: Int?,
+    onClose: () -> Unit,
 ) {
     val sections = mutableListOf(
         SummarySection(
@@ -284,7 +287,7 @@ internal fun ForTimeSummary(
             )
         )
     }
-    SummaryScreen(sections)
+    SummaryScreen(sections, onClose)
 }
 
 @Composable

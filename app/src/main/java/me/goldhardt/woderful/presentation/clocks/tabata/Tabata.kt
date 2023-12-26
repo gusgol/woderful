@@ -103,7 +103,8 @@ class TabataConfiguration(
 
 @Composable
 fun TabataScreen(
-    viewModel: ExerciseViewModel = hiltViewModel()
+    viewModel: ExerciseViewModel = hiltViewModel(),
+    onClose: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -156,6 +157,7 @@ fun TabataScreen(
                         roundCount = workout.rounds,
                         calories = workout.calories,
                         avgHeartRate = workout.avgHeartRate?.toInt(),
+                        onClose = onClose,
                     )
                 }
             }
@@ -370,8 +372,9 @@ internal fun TabataSummary(
     roundCount: Int,
     calories: Double?,
     avgHeartRate: Int?,
+    onClose: () -> Unit,
 ) {
-    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate))
+    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate), onClose)
 }
 
 @WearPreviewDevices

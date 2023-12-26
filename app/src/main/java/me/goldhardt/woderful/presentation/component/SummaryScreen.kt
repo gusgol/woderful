@@ -4,14 +4,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
@@ -21,6 +26,7 @@ import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 @Composable
 fun SummaryScreen(
     sections: List<SummarySection>,
+    onClose: () -> Unit = {},
     descriptionSlot: @Composable () -> Unit = {},
 ) {
     val listState = rememberScalingLazyListState()
@@ -47,6 +53,24 @@ fun SummaryScreen(
                 item {
                     WorkoutInfoItem(value = section.value, text = section.title)
                 }
+            }
+            item {
+                Chip(
+                    onClick = onClose,
+                    icon = {
+                        Icon(
+                          imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.action_close),
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(R.string.action_close),
+                            maxLines = 1, overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    modifier = Modifier.padding(top = 16.dp)
+                )
             }
         }
     }

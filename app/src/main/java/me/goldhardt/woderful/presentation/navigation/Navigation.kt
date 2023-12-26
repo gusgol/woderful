@@ -59,16 +59,24 @@ fun MainNavigation(
             }
         }
         composable(AMRAP) {
-            AmrapScreen()
+            AmrapScreen {
+                navController.popBackStack()
+            }
         }
         composable(EMOM) {
-            EmomScreen()
+            EmomScreen {
+                navController.popBackStack()
+            }
         }
         composable(TABATA) {
-            TabataScreen()
+            TabataScreen {
+                navController.popBackStack()
+            }
         }
         composable(FOR_TIME) {
-            ForTimeScreen()
+            ForTimeScreen {
+                navController.popBackStack()
+            }
         }
         composable(HISTORY) {
             History()

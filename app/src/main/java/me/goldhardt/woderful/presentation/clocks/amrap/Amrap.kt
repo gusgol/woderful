@@ -85,7 +85,8 @@ class AmrapConfiguration(
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AmrapScreen(
-    viewModel: ExerciseViewModel = hiltViewModel()
+    viewModel: ExerciseViewModel = hiltViewModel(),
+    onClose: () -> Unit = {},
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -149,6 +150,7 @@ fun AmrapScreen(
                         roundCount = workout.rounds,
                         calories = workout.calories,
                         avgHeartRate = workout.avgHeartRate?.toInt(),
+                        onClose = onClose,
                     )
                 }
             }
@@ -422,8 +424,9 @@ internal fun AmrapSummary(
     roundCount: Int,
     calories: Double?,
     avgHeartRate: Int?,
+    onClose: () -> Unit,
 ) {
-    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate))
+    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate), onClose)
 }
 
 internal enum class AmrapInstructionsStep {

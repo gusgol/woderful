@@ -56,13 +56,13 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.playservices.wearable)
     implementation(libs.percent.layout)
-    implementation(libs.legacySupportV4)
+    implementation(libs.legacy.support.v4)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui.base)
     implementation(libs.ui.tooling.preview)
     implementation(libs.ui.tooling)
 
-    implementation(libs.lifecycleRuntimeCompose)
+    implementation(libs.lifecycle.runtime.ktx)
 
     // Wear OS
     implementation(libs.wear.foundation)
@@ -70,11 +70,7 @@ dependencies {
     implementation(libs.wear.material)
 
 
-//    implementation(libs.tiles)
-    implementation(libs.tiles.material)
-
-    implementation(libs.lifecycleRuntimeCompose)
-    implementation(libs.lifecycleRuntimeKtx)
+    implementation(libs.lifecycle.runtime.compose)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.accompanist.permissions)
@@ -82,12 +78,11 @@ dependencies {
     implementation(libs.guava)
 
     // Lifecycle
-    implementation(libs.concurrentFuturesKtx)
-    implementation(libs.lifecycleViewmodelKtx)
+    implementation(libs.concurrent.futures.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
 
 
-//    implementation(libs.watchfaceComplicationsDataSourceKtx)
-    implementation(libs.navigationRuntimeKtx)
+    implementation(libs.navigation.runtime.ktx)
 
 
     // Horologist
@@ -108,7 +103,7 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
-    implementation(libs.hilt.navigationCompose)
+    implementation(libs.hilt.navigation.compose)
     kapt(libs.hilt.compiler)
 
     // Room

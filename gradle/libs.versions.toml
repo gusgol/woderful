@@ -12,11 +12,9 @@ room = "2.5.2"
 paging = "3.1.1"
 moshi = "1.14.0"
 health_services = "1.0.0-rc01"
-androidx_core_version = "1.12.0"
 playservices-wearable = "18.1.0"
 compose-bom = "2022.10.00"
 activity-compose = "1.7.2"
-navigation-compose = "2.7.2"
 paging-compose = "3.2.0"
 datastore-prefereces = "1.0.0"
 lifecycle-runtime-ktx = "2.6.1"
@@ -26,10 +24,8 @@ percent-layout = "1.0.0"
 legacy-support-v4 = "1.0.0"
 concurrent-futures-ktx = "1.1.0"
 lifecycle-viewmodel-ktx = "2.6.1"
-watchface-complications-data-source-ktx = "1.1.1"
 navigation-runtime-ktx = "2.6.0"
 compose-material-base = "1.5.0-beta02"
-guava = "31.0.1-android"
 compose-ui = "1.6.0-SNAPSHOT"
 
 [libraries]
@@ -42,10 +38,7 @@ ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview
 wear-material = { module = "androidx.wear.compose:compose-material", version.ref = "wear_compose_version" }
 wear-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear_compose_version" }
 wear-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear_compose_version" }
-wear-ui-tooling = { module = "androidx.wear.compose:compose-ui-tooling", version.ref = "wear_compose_version" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
-androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
-androidx-compose-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "compose" }
 horologist-composables = { module = "com.google.android.horologist:horologist-composables", version.ref = "horologist" }
 horologist-compose-tools = { module = "com.google.android.horologist:horologist-compose-tools", version.ref = "horologist" }
 horologist-tiles = { module = "com.google.android.horologist:horologist-tiles", version.ref = "horologist" }
@@ -63,14 +56,12 @@ moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "mosh
 health-services-client = { module = "androidx.health:health-services-client", version.ref = "health-services" }
 paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "paging" }
 paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging-compose"}
-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 tiles-material = { module = "androidx.wear.tiles:tiles-material", version.ref = "wear-tiles" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore-prefereces" }
 lifecycleRuntimeCompose= { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle-runtime-ktx" }
 lifecycleRuntimeKtx= { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-compose" }
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "compose" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 wear-ongoing = "androidx.wear:wear-ongoing:1.0.0"
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
@@ -79,7 +70,6 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 legacySupportV4 = { module = "androidx.legacy:legacy-support-v4", version.ref = "legacy-support-v4" }
 concurrentFuturesKtx = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrent-futures-ktx" }
 lifecycleViewmodelKtx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle-viewmodel-ktx" }
-watchfaceComplicationsDataSourceKtx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "watchface-complications-data-source-ktx" }
 navigationRuntimeKtx = { module = "androidx.navigation:navigation-runtime-ktx", version.ref = "navigation-runtime-ktx" }
 compose-material-base = { module = "androidx.compose.material:material", version.ref = "compose-material-base" }
 guava = "com.google.guava:guava:31.0.1-android"

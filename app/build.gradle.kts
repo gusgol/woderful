@@ -1,9 +1,8 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
-    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.android)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.org.jetbrains.kotlin.kapt)
+    alias(libs.plugins.kapt)
+    alias(libs.plugins.kotlin)
 }
 
 android {
@@ -51,39 +50,33 @@ android {
 }
 
 dependencies {
-
-
+    // Core
     implementation(libs.core.ktx)
     implementation(libs.playservices.wearable)
-    implementation(libs.percent.layout)
     implementation(libs.legacy.support.v4)
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.navigation.runtime.ktx)
+    implementation(libs.guava)
+
+    // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui.base)
     implementation(libs.ui.tooling.preview)
     implementation(libs.ui.tooling)
-
-    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.androidx.activity.compose)
 
     // Wear OS
     implementation(libs.wear.foundation)
     implementation(libs.wear.navigation)
     implementation(libs.wear.material)
 
-
-    implementation(libs.lifecycle.runtime.compose)
-
-    implementation(libs.androidx.activity.compose)
+    // Accompanist
     implementation(libs.accompanist.permissions)
-
-    implementation(libs.guava)
 
     // Lifecycle
     implementation(libs.concurrent.futures.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
-
-
-    implementation(libs.navigation.runtime.ktx)
-
 
     // Horologist
     implementation(libs.horologist.composables)
@@ -91,7 +84,6 @@ dependencies {
     implementation(libs.horologist.tiles)
     implementation(libs.horologist.health.composables)
     implementation(libs.horologist.health.service)
-
 
     // Material
     implementation(libs.compose.material.base)
@@ -124,9 +116,9 @@ dependencies {
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
 
+    // Tests
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
-
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -11,9 +11,9 @@ android {
 
     defaultConfig {
         applicationId = "me.goldhardt.woderful"
-        minSdk = 30
-        targetSdk = 34
-        versionCode = 1
+        minSdk = 33
+        targetSdk = 33
+        versionCode = 2
         versionName = "0.1.0"
         vectorDrawables {
             useSupportLibrary = true
@@ -103,7 +103,7 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
     annotationProcessor(libs.room.compiler)
-    kapt(libs.room.compiler)
+     kapt(libs.room.compiler)
 
     // Paging
     implementation(libs.paging.runtime.ktx)

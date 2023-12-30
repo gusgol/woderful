@@ -1,10 +1,6 @@
 package me.goldhardt.woderful.presentation.clocks.amrap
 
 import android.annotation.SuppressLint
-import android.content.ContentValues
-import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -17,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,7 +26,6 @@ import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import com.google.android.horologist.health.composables.ActiveDurationText
-import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
@@ -38,7 +34,8 @@ import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
-import me.goldhardt.woderful.presentation.clocks.ExercisePermissions.DEFAULT_EXERCISE_PERMISSIONS
+import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
+import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
@@ -65,9 +62,10 @@ import kotlin.time.Duration.Companion.seconds
  * Flow for the Amrap screen.
  */
 internal sealed class AmrapFlow {
-    object TimeConfig : AmrapFlow()
-    object Instructions : AmrapFlow()
-    object Tracker : AmrapFlow()
+    data object Permissions: AmrapFlow()
+    data object TimeConfig : AmrapFlow()
+    data object Instructions : AmrapFlow()
+    data object Tracker : AmrapFlow()
     data class Summary(
         val workout: Workout,
     ) : AmrapFlow()
@@ -91,7 +89,15 @@ fun AmrapScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    var step: AmrapFlow by remember { mutableStateOf(AmrapFlow.TimeConfig) }
+    val initialScreen = if (ExercisePermissions.hasPermissions(LocalContext.current)) {
+        AmrapFlow.TimeConfig
+    } else {
+        AmrapFlow.Permissions
+    }
+
+    var step: AmrapFlow by remember {
+        mutableStateOf(initialScreen)
+    }
     var config by remember { mutableStateOf(AmrapConfiguration(0L)) }
 
     if (uiState.isEnded) {
@@ -106,9 +112,13 @@ fun AmrapScreen(
             }
 
             when (step) {
+                AmrapFlow.Permissions -> {
+                    ExercisePermissionsLauncher {
+                        step = AmrapFlow.TimeConfig
+                    }
+                }
                 AmrapFlow.TimeConfig -> {
                     AmrapConfiguration(
-                        DEFAULT_EXERCISE_PERMISSIONS,
                         onConfirm = { selectedTime ->
                             config = AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
                             step = if (viewModel.hasShownCounterInstructions) {
@@ -261,23 +271,8 @@ internal fun AmrapInstructions(
 @ExperimentalPermissionsApi
 @Composable
 internal fun AmrapConfiguration(
-    permissions: List<String>,
     onConfirm: (Int) -> Unit = {}
 ) {
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
-        if (result.all { it.value }) {
-            Log.d(ContentValues.TAG, "All required permissions granted")
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        launch {
-            permissionLauncher.launch(permissions.toTypedArray())
-        }
-    }
-
     MinutesTimeConfiguration(
         title = stringResource(id = R.string.title_how_long),
         onConfirm = onConfirm

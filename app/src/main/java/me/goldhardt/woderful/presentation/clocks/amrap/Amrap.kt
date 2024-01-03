@@ -29,24 +29,22 @@ import com.google.android.horologist.health.composables.ActiveDurationText
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
-import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
-import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
+import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.SummaryScreen
 import me.goldhardt.woderful.presentation.component.defaultSummarySections
-import me.goldhardt.woderful.service.ExerciseEvent
-import java.util.Date
+import me.goldhardt.woderful.service.WorkoutState
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -66,9 +64,6 @@ internal sealed class AmrapFlow {
     data object TimeConfig : AmrapFlow()
     data object Instructions : AmrapFlow()
     data object Tracker : AmrapFlow()
-    data class Summary(
-        val workout: Workout,
-    ) : AmrapFlow()
 }
 
 class AmrapConfiguration(
@@ -100,68 +95,57 @@ fun AmrapScreen(
     }
     var config by remember { mutableStateOf(AmrapConfiguration(0L)) }
 
-    if (uiState.isEnded) {
-        // TODO act accordingly
-    }
-
     when (uiState.serviceState) {
         is ServiceState.Connected -> {
-
             LaunchedEffect(Unit) {
                 viewModel.prepareExercise()
             }
-
-            when (step) {
-                AmrapFlow.Permissions -> {
-                    ExercisePermissionsLauncher {
-                        step = AmrapFlow.TimeConfig
-                    }
-                }
-                AmrapFlow.TimeConfig -> {
-                    AmrapConfiguration(
-                        onConfirm = { selectedTime ->
-                            config = AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
-                            step = if (viewModel.hasShownCounterInstructions) {
-                                AmrapFlow.Tracker
-                            } else {
-                                AmrapFlow.Instructions
-                            }
+            if (uiState.isEnded && uiState.workoutState != null) {
+                AmrapSummary(
+                    workoutState = requireNotNull(uiState.workoutState),
+                    onClose = onClose
+                )
+            } else {
+                when (step) {
+                    AmrapFlow.Permissions -> {
+                        ExercisePermissionsLauncher {
+                            step = AmrapFlow.TimeConfig
                         }
-                    )
-                }
-                AmrapFlow.Instructions -> {
-                    AmrapInstructions {
-                        /**
-                         * We need to mark the instructions as shown before starting the exercise.
-                         * This is prevent this screen from being shown again when the user returns to it.
-                         */
-                        viewModel.onCounterInstructionsShown()
+                    }
+                    AmrapFlow.TimeConfig -> {
+                        AmrapConfiguration(
+                            onConfirm = { selectedTime ->
+                                config = AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
+                                step = if (viewModel.hasShownCounterInstructions) {
+                                    AmrapFlow.Tracker
+                                } else {
+                                    AmrapFlow.Instructions
+                                }
+                            }
+                        )
+                    }
+                    AmrapFlow.Instructions -> {
+                        AmrapInstructions {
+                            /**
+                             * We need to mark the instructions as shown before starting the exercise.
+                             * This is prevent this screen from being shown again when the user returns to it.
+                             */
+                            viewModel.onCounterInstructionsShown()
 
-                        step = AmrapFlow.Tracker
+                            step = AmrapFlow.Tracker
+                        }
                     }
-                }
-                AmrapFlow.Tracker -> {
-                    LaunchedEffect(Unit) {
-                        viewModel.startExercise(ClockType.AMRAP, config)
+                    AmrapFlow.Tracker -> {
+                        LaunchedEffect(Unit) {
+                            viewModel.startExercise(ClockType.AMRAP, config)
+                        }
+                        AmrapTracker(
+                            durationS = config.getTotalDurationS(),
+                            uiState = uiState,
+                        ) {
+                            viewModel.endWorkout()
+                        }
                     }
-                    AmrapTracker(
-                        durationS = config.getTotalDurationS(),
-                        uiState = uiState,
-                    ) { workout ->
-                        viewModel.endExercise()
-                        viewModel.insertWorkout(workout)
-                        step = AmrapFlow.Summary(workout)
-                    }
-                }
-                is AmrapFlow.Summary -> {
-                    val workout = (step as AmrapFlow.Summary).workout
-                    AmrapSummary(
-                        duration = workout.durationMs.toMinutesAndSeconds(),
-                        roundCount = workout.rounds,
-                        calories = workout.calories,
-                        avgHeartRate = workout.avgHeartRate?.toInt(),
-                        onClose = onClose,
-                    )
                 }
             }
         }
@@ -284,10 +268,10 @@ internal fun AmrapConfiguration(
 @Composable
 internal fun AmrapTracker(
     durationS: Long,
-    uiState: ExerciseScreenState,
-    onFinished: (Workout) -> Unit = {},
+    uiState: WorkoutUiState,
+    onEndWorkout: () -> Unit,
 ) {
-    val metrics = uiState.exerciseState?.exerciseMetrics
+    val metrics = uiState.workoutState?.workoutMetrics
 
     val segments = mutableListOf<ProgressIndicatorSegment>()
     repeat(durationS.toInt() / 60) {
@@ -301,7 +285,7 @@ internal fun AmrapTracker(
     }
 
     var elapsedTimeMs by remember { mutableLongStateOf(0L) }
-    val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+    val activeDuration = uiState.workoutState?.activeDurationCheckpoint
     elapsedTimeMs = activeDuration?.getElapsedTimeMs() ?: elapsedTimeMs
 
     var progress by remember { mutableFloatStateOf(0F) }
@@ -324,27 +308,8 @@ internal fun AmrapTracker(
         heartRate = it
     }
 
-    val endWorkout: (Long) -> Unit = { totalTimeMs ->
-        onFinished(
-            Workout(
-                durationMs = totalTimeMs,
-                type = ClockType.AMRAP,
-                rounds = roundCount,
-                calories = calories,
-                avgHeartRate = metrics?.heartRateAverage,
-                createdAt = Date().time
-            )
-        )
-    }
-
-    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
-        endWorkout(elapsedTimeMs)
-    }
-
     StopWorkoutContainer(
-        onConfirm = {
-            endWorkout(elapsedTimeMs)
-        }
+        onConfirm = onEndWorkout,
     ) {
         Box(
             modifier = Modifier
@@ -394,14 +359,14 @@ internal fun AmrapTracker(
 
 @OptIn(ExperimentalHorologistApi::class)
 @Composable
-fun Duration(uiState: ExerciseScreenState) {
-    val lastActiveDurationCheckpoint = uiState.exerciseState?.activeDurationCheckpoint
-    val exerciseState = uiState.exerciseState?.exerciseState
+fun Duration(uiState: WorkoutUiState) {
+    val lastActiveDurationCheckpoint = uiState.workoutState?.activeDurationCheckpoint
+    val exerciseState = uiState.workoutState?.exerciseState
 
     if (exerciseState != null && lastActiveDurationCheckpoint != null) {
         ActiveDurationText(
             checkpoint = lastActiveDurationCheckpoint,
-            state = uiState.exerciseState.exerciseState
+            state = uiState.workoutState.exerciseState
         ) {
             Text(
                 text = formatElapsedTime(it),
@@ -415,12 +380,13 @@ fun Duration(uiState: ExerciseScreenState) {
 
 @Composable
 internal fun AmrapSummary(
-    duration: String,
-    roundCount: Int,
-    calories: Double?,
-    avgHeartRate: Int?,
+    workoutState: WorkoutState,
     onClose: () -> Unit,
 ) {
+    val duration = (workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0L).toMinutesAndSeconds()
+    val roundCount = workoutState.exerciseLaps
+    val calories = workoutState.workoutMetrics.calories
+    val avgHeartRate = workoutState.workoutMetrics.heartRateAverage?.toInt()
     SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate), onClose)
 }
 

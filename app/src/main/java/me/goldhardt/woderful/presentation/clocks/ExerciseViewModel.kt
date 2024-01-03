@@ -18,8 +18,18 @@ import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
+import me.goldhardt.woderful.extensions.getElapsedTimeMs
+import me.goldhardt.woderful.presentation.clocks.emom.toProperties
 import me.goldhardt.woderful.service.ExerciseEvent
+import java.util.Date
 import javax.inject.Inject
+
+/**
+ * //TODO remove unused methods
+ * //TODO review function visibility
+ * //TODO test behavior alongside other tracking apps
+ * //TODO end is still not behaving properly
+ */
 
 @HiltViewModel
 class ExerciseViewModel @Inject constructor(
@@ -31,19 +41,20 @@ class ExerciseViewModel @Inject constructor(
 
     var hasShownCounterInstructions = false
 
-    val uiState: StateFlow<ExerciseScreenState> = healthServicesRepository.serviceState.map {
-        ExerciseScreenState(
+    val uiState: StateFlow<WorkoutUiState> = healthServicesRepository.serviceState.map {
+        WorkoutUiState(
             hasExerciseCapabilities = healthServicesRepository.hasExerciseCapability(),
             isTrackingAnotherExercise = healthServicesRepository.isTrackingExerciseInAnotherApp(),
             serviceState = it,
-            exerciseState = (it as? ServiceState.Connected)?.exerciseServiceState,
+            workoutState = (it as? ServiceState.Connected)?.workoutState,
         )
     }.onEach {
-        when (it.exerciseState?.exerciseEvent) {
-            ExerciseEvent.Lap -> {
+        when (it.workoutState?.exerciseEvent) {
+            ExerciseEvent.Milestone -> {
                 vibrate()
             }
             ExerciseEvent.TimeEnded -> {
+                endWorkout()
                 vibrate()
             }
             else -> {}
@@ -52,14 +63,18 @@ class ExerciseViewModel @Inject constructor(
         viewModelScope,
         SharingStarted.WhileSubscribed(3_000),
         healthServicesRepository.serviceState.value.let {
-            ExerciseScreenState(
+            WorkoutUiState(
                 true,
                 false,
                 it,
-                (it as? ServiceState.Connected)?.exerciseServiceState
+                (it as? ServiceState.Connected)?.workoutState
             )
         }
     )
+
+    private var clockType: ClockType? = null
+
+    private var configuration: WorkoutConfiguration? = null
 
     init {
         getUserPreferences()
@@ -77,7 +92,16 @@ class ExerciseViewModel @Inject constructor(
         clockType: ClockType,
         workoutConfiguration: WorkoutConfiguration
     ) {
+        this.clockType = clockType
+        this.configuration = workoutConfiguration
         healthServicesRepository.startExercise(clockType, workoutConfiguration)
+    }
+
+    fun endWorkout() {
+        endExercise()
+        getWorkout()?.let {
+            insertWorkout(it)
+        }
     }
 
     fun pauseExercise() {
@@ -107,6 +131,21 @@ class ExerciseViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferencesRepository.setCounterInstructionsShown(true)
         }
+    }
+
+    private fun getWorkout(): Workout? {
+        val workoutState = uiState.value.workoutState
+            ?: return null
+        val totalElapsedTime: Long = workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0
+        return Workout(
+            durationMs = totalElapsedTime,
+            type = clockType ?: throw IllegalStateException("Clock type is null"),
+            rounds = workoutState.exerciseLaps,
+            createdAt = Date().time,
+            calories = workoutState.workoutMetrics.calories,
+            avgHeartRate = workoutState.workoutMetrics.heartRateAverage,
+            properties = configuration?.toProperties() ?: emptyMap()
+        )
     }
 
     private fun getUserPreferences() {

@@ -5,12 +5,12 @@ import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.ExerciseState
 import androidx.health.services.client.data.ExerciseUpdate
 
-data class ExerciseMetrics(
+data class WorkoutMetrics(
     val heartRate: Double? = null,
     val calories: Double? = null,
     val heartRateAverage: Double? = null,
 ) {
-    fun update(latestMetrics: DataPointContainer): ExerciseMetrics {
+    fun update(latestMetrics: DataPointContainer): WorkoutMetrics {
         return copy(
             heartRate = latestMetrics.getData(DataType.HEART_RATE_BPM).lastOrNull()?.value
                 ?: heartRate,
@@ -21,15 +21,16 @@ data class ExerciseMetrics(
     }
 }
 
-data class ExerciseServiceState(
+data class WorkoutState(
     val exerciseState: ExerciseState? = null,
-    val exerciseMetrics: ExerciseMetrics = ExerciseMetrics(),
+    val workoutMetrics: WorkoutMetrics = WorkoutMetrics(),
     val exerciseLaps: Int = 0,
     val activeDurationCheckpoint: ExerciseUpdate.ActiveDurationCheckpoint? = null,
     val exerciseEvent: ExerciseEvent? = null
 )
 
 sealed interface ExerciseEvent{
-    object Lap : ExerciseEvent
-    object TimeEnded : ExerciseEvent
+    data object Progress : ExerciseEvent
+    data object Milestone : ExerciseEvent
+    data object TimeEnded : ExerciseEvent
 }

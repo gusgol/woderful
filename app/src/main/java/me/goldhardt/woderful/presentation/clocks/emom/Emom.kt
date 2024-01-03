@@ -58,10 +58,10 @@ import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
-import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.FakeExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.MinutesAndSecondsTimeConfiguration
+import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.component.CircleContainer
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
@@ -81,11 +81,11 @@ import kotlin.time.Duration.Companion.seconds
  * Represents the flow of the Emom workout configuration.
  */
 internal sealed class EmomFlow {
-    object Permissions : EmomFlow()
-    object TimeConfig : EmomFlow()
-    object RoundsConfig : EmomFlow()
-    object RestConfig : EmomFlow()
-    object Tracker : EmomFlow()
+    data object Permissions : EmomFlow()
+    data object TimeConfig : EmomFlow()
+    data object RoundsConfig : EmomFlow()
+    data object RestConfig : EmomFlow()
+    data object Tracker : EmomFlow()
     data class Summary(
         val workout: Workout,
         val configuration: WorkoutConfiguration,
@@ -263,10 +263,10 @@ internal fun EmomRestConfiguration(
 @Composable
 internal fun EmomTracker(
     configuration: WorkoutConfiguration,
-    uiState: ExerciseScreenState,
+    uiState: WorkoutUiState,
     onFinished: (Workout) -> Unit,
 ) {
-    val metrics = uiState.exerciseState?.exerciseMetrics
+    val metrics = uiState.workoutState?.workoutMetrics
 
     val totalRoundTimeS = (configuration.activeTimeS + configuration.restTimeS).toFloat()
     val activeSegmentWeight = configuration.activeTimeS / totalRoundTimeS
@@ -295,7 +295,7 @@ internal fun EmomTracker(
     }
 
     var elapsedTimeMs by remember { mutableLongStateOf(0L) }
-    val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+    val activeDuration = uiState.workoutState?.activeDurationCheckpoint
     elapsedTimeMs = activeDuration?.getElapsedTimeMs() ?: elapsedTimeMs
 
     var progress by remember { mutableFloatStateOf(0F) }
@@ -330,7 +330,7 @@ internal fun EmomTracker(
         )
     }
 
-    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
+    if (uiState.workoutState?.exerciseEvent == ExerciseEvent.TimeEnded) {
         finishWorkout()
     }
 

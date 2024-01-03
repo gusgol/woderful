@@ -54,10 +54,10 @@ import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
-import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.FakeExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
+import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.clocks.emom.toProperties
 import me.goldhardt.woderful.presentation.component.CircleContainer
@@ -158,10 +158,10 @@ internal fun ForTimeTimeConfiguration(
 @Composable
 internal fun ForTimeTracker(
     configuration: ForTimeConfiguration,
-    uiState: ExerciseScreenState,
+    uiState: WorkoutUiState,
     onFinished: (Workout) -> Unit,
 ) {
-    val metrics = uiState.exerciseState?.exerciseMetrics
+    val metrics = uiState.workoutState?.workoutMetrics
 
     val segments = mutableListOf(
         ProgressIndicatorSegment(
@@ -172,7 +172,7 @@ internal fun ForTimeTracker(
     )
 
     var elapsedTimeMs by remember { mutableLongStateOf(0L) }
-    val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+    val activeDuration = uiState.workoutState?.activeDurationCheckpoint
     elapsedTimeMs = activeDuration?.getElapsedTimeMs() ?: elapsedTimeMs
 
     var progress by remember { mutableFloatStateOf(0F) }
@@ -208,7 +208,7 @@ internal fun ForTimeTracker(
         )
     }
 
-    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
+    if (uiState.workoutState?.exerciseEvent == ExerciseEvent.TimeEnded) {
         finishWorkout()
     }
 

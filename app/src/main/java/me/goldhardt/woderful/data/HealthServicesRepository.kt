@@ -16,7 +16,7 @@ import me.goldhardt.woderful.di.bindService
 import me.goldhardt.woderful.extensions.isExerciseInProgress
 import me.goldhardt.woderful.extensions.isTrackingExerciseInAnotherApp
 import me.goldhardt.woderful.service.ExerciseService
-import me.goldhardt.woderful.service.ExerciseServiceState
+import me.goldhardt.woderful.service.WorkoutState
 import javax.inject.Inject
 
 
@@ -31,7 +31,7 @@ class HealthServicesRepository @Inject constructor(
         lifecycle.bindService<ExerciseService.LocalBinder, ExerciseService>(applicationContext)
 
     val serviceState: StateFlow<ServiceState> =
-        binderConnection.flowWhenConnected(ExerciseService.LocalBinder::exerciseServiceState).map {
+        binderConnection.flowWhenConnected(ExerciseService.LocalBinder::workoutState).map {
             ServiceState.Connected(it)
         }.stateIn(
             coroutineScope,
@@ -70,9 +70,9 @@ class HealthServicesRepository @Inject constructor(
 /** Store exercise values in the service state. While the service is connected,
  * the values will persist.**/
 sealed class ServiceState {
-    object Disconnected : ServiceState()
+    data object Disconnected : ServiceState()
     data class Connected(
-        val exerciseServiceState: ExerciseServiceState,
+        val workoutState: WorkoutState,
     ) : ServiceState()
 }
 

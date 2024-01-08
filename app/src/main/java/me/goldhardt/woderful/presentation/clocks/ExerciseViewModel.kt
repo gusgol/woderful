@@ -1,6 +1,5 @@
 package me.goldhardt.woderful.presentation.clocks
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +20,7 @@ import me.goldhardt.woderful.domain.VibrateUseCase
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.presentation.clocks.emom.toProperties
 import me.goldhardt.woderful.service.ExerciseEvent
+import me.goldhardt.woderful.service.WorkoutState
 import java.util.Date
 import javax.inject.Inject
 
@@ -28,7 +28,6 @@ import javax.inject.Inject
  * //TODO remove unused methods
  * //TODO review function visibility
  * //TODO test behavior alongside other tracking apps
- * //TODO end is still not behaving properly
  */
 
 @HiltViewModel
@@ -54,7 +53,7 @@ class ExerciseViewModel @Inject constructor(
                 vibrate()
             }
             ExerciseEvent.TimeEnded -> {
-                endWorkout()
+                endWorkout(it.workoutState)
                 vibrate()
             }
             else -> {}
@@ -97,9 +96,9 @@ class ExerciseViewModel @Inject constructor(
         healthServicesRepository.startExercise(clockType, workoutConfiguration)
     }
 
-    fun endWorkout() {
+    fun endWorkout(state: WorkoutState) {
         endExercise()
-        getWorkout()?.let {
+        state.toWorkout()?.let {
             insertWorkout(it)
         }
     }
@@ -117,7 +116,6 @@ class ExerciseViewModel @Inject constructor(
     }
 
     fun markLap() {
-        Log.e("ExerciseViewModel", "markLap")
         healthServicesRepository.markLap()
     }
 
@@ -133,21 +131,6 @@ class ExerciseViewModel @Inject constructor(
         }
     }
 
-    private fun getWorkout(): Workout? {
-        val workoutState = uiState.value.workoutState
-            ?: return null
-        val totalElapsedTime: Long = workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0
-        return Workout(
-            durationMs = totalElapsedTime,
-            type = clockType ?: throw IllegalStateException("Clock type is null"),
-            rounds = workoutState.exerciseLaps,
-            createdAt = Date().time,
-            calories = workoutState.workoutMetrics.calories,
-            avgHeartRate = workoutState.workoutMetrics.heartRateAverage,
-            properties = configuration?.toProperties() ?: emptyMap()
-        )
-    }
-
     private fun getUserPreferences() {
         viewModelScope.launch {
             hasShownCounterInstructions = userPreferencesRepository.hasShownCounterInstructions()
@@ -160,5 +143,19 @@ class ExerciseViewModel @Inject constructor(
                 vibrateUseCase(500L)
             }
         }
+    }
+
+    private fun WorkoutState?.toWorkout(): Workout? {
+        val workoutState = this ?: return null
+        val totalElapsedTime: Long = workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0
+        return Workout(
+            durationMs = totalElapsedTime,
+            type = clockType ?: throw IllegalStateException("Clock type is null"),
+            rounds = workoutState.exerciseLaps,
+            createdAt = Date().time,
+            calories = workoutState.workoutMetrics.calories,
+            avgHeartRate = workoutState.workoutMetrics.heartRateAverage,
+            properties = configuration?.toProperties() ?: emptyMap()
+        )
     }
 }

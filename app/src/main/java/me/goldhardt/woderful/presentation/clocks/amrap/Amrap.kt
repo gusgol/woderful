@@ -143,7 +143,9 @@ fun AmrapScreen(
                             durationS = config.getTotalDurationS(),
                             uiState = uiState,
                         ) {
-                            viewModel.endWorkout()
+                            uiState.workoutState?.let {
+                                viewModel.endWorkout(it)
+                            }
                         }
                     }
                 }

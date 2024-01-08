@@ -50,8 +50,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * To do's:
  *
- *      1. TODO Improve how workout is ended. It's now relying on the view, but ideally it should not need it.
- *      2. TODO Clean up!
+ *      1. TODO Clean up!
  */
 
 
@@ -116,7 +115,7 @@ fun AmrapScreen(
                         AmrapConfiguration(
                             onConfirm = { selectedTime ->
                                 config = AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
-                                step = if (viewModel.hasShownCounterInstructions) {
+                                step = if (false) {
                                     AmrapFlow.Tracker
                                 } else {
                                     AmrapFlow.Instructions
@@ -142,6 +141,9 @@ fun AmrapScreen(
                         AmrapTracker(
                             durationS = config.getTotalDurationS(),
                             uiState = uiState,
+                            onRoundIncreased = {
+                                viewModel.markLap()
+                            },
                         ) {
                             uiState.workoutState?.let {
                                 viewModel.endWorkout(it)
@@ -163,29 +165,17 @@ internal fun AmrapInstructions(
     modifier: Modifier = Modifier,
     onFinished: () -> Unit,
 ) {
-    var step by remember { mutableStateOf(AmrapInstructionsStep.TAP) }
+    var step by remember { mutableStateOf(AmrapInstructionsStep.DOUBLE_TAP) }
     var roundCounter by remember { mutableIntStateOf(0) }
-
-    val instructionText = if (step == AmrapInstructionsStep.TAP) {
-        stringResource(R.string.action_increase_rounds)
-    } else {
-        stringResource(R.string.action_decrease_rounds)
-    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onTap = {
-                        roundCounter++
-                        step = AmrapInstructionsStep.DOUBLE_TAP
-                    },
                     onDoubleTap = {
-                        if (roundCounter > 0) {
-                            roundCounter--
-                            step = AmrapInstructionsStep.DONE
-                        }
+                        roundCounter++
+                        step = AmrapInstructionsStep.DONE
                     }
                 )
             }
@@ -205,7 +195,7 @@ internal fun AmrapInstructions(
                     .padding(8.dp)
             )
             Text(
-                text = instructionText,
+                text = stringResource(R.string.action_increase_rounds),
                 style = MaterialTheme.typography.body1,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
@@ -232,12 +222,19 @@ internal fun AmrapInstructions(
                     .padding(32.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.title_you_are_all_set),
+                    text = stringResource(R.string.title_that_is_right),
                     style = MaterialTheme.typography.title1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                )
+                Text(
+                    text = stringResource(R.string.title_you_are_all_set),
+                    style = MaterialTheme.typography.body1,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Chip(
@@ -271,6 +268,7 @@ internal fun AmrapConfiguration(
 internal fun AmrapTracker(
     durationS: Long,
     uiState: WorkoutUiState,
+    onRoundIncreased: () -> Unit = {},
     onEndWorkout: () -> Unit,
 ) {
     val metrics = uiState.workoutState?.workoutMetrics
@@ -298,8 +296,6 @@ internal fun AmrapTracker(
     )
     progress = elapsedTimeMs / (durationS * 1000).toFloat()
 
-    var roundCount by remember { mutableIntStateOf(0) }
-
     var calories by remember { mutableDoubleStateOf(0.0) }
     metrics?.calories?.let {
         calories = it
@@ -318,13 +314,8 @@ internal fun AmrapTracker(
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onTap = {
-                            roundCount++
-                        },
                         onDoubleTap = {
-                            if (roundCount > 0) {
-                                roundCount--
-                            }
+                            onRoundIncreased()
                         }
                     )
                 }
@@ -352,7 +343,7 @@ internal fun AmrapTracker(
                 ) {
                     HeartRateMonitor(hr = heartRate)
                     Spacer(modifier = Modifier.width(16.dp))
-                    RoundsCounter(roundCount)
+                    RoundsCounter(uiState.workoutState?.exerciseLaps ?: 0)
                 }
             }
         }
@@ -393,7 +384,6 @@ internal fun AmrapSummary(
 }
 
 internal enum class AmrapInstructionsStep {
-    TAP,
     DOUBLE_TAP,
     DONE,
 }

@@ -20,9 +20,9 @@
     <string name="title_not_available">Not available</string>
     <string name="title_no_hr_reading">--</string>
     <string name="action_confirm">Confirm</string>
-    <string name="action_increase_rounds">Tap once to increase rounds</string>
-    <string name="action_decrease_rounds">Tap twice to decrease rounds</string>
+    <string name="action_increase_rounds">Tap twice to increase rounds</string>
     <string name="title_instructions">Instructions</string>
+    <string name="title_that_is_right">That\'s right!</string>
     <string name="title_you_are_all_set">You are all set!</string>
     <string name="action_lets_start">Let\'s start</string>
     <string name="title_loading">Loading…</string>

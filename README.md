@@ -5,9 +5,12 @@
 ### General
 - [ ] Refactor [ClockProperties.EMOM] since this is used by all clocks now.
 - [ ] New starting workout screen.
+- [ ] Limit the number of sections (check limit).
+- [ ] Extract round picker to its own component.
+- [ ] "Reset" exercise. 
 
 ### Tabata
-- [ ] Migrate to new end structure.
+- [ ] Change init message.
 
 ### For Time
-- [ ] Migrate to new end structure.
+- [ ] Implement round count.

@@ -1,6 +1,5 @@
 package me.goldhardt.woderful.presentation.clocks.amrap
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -8,8 +7,26 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -20,7 +37,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.wear.compose.material.*
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.ProgressIndicatorDefaults
+import androidx.wear.compose.material.Text
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.composables.ProgressIndicatorSegment
@@ -29,7 +49,6 @@ import com.google.android.horologist.health.composables.ActiveDurationText
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
-import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
@@ -47,33 +66,6 @@ import me.goldhardt.woderful.presentation.component.defaultSummarySections
 import me.goldhardt.woderful.service.WorkoutState
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * To do's:
- *
- *      1. TODO Clean up!
- */
-
-
-
-/**
- * Flow for the Amrap screen.
- */
-internal sealed class AmrapFlow {
-    data object Permissions: AmrapFlow()
-    data object TimeConfig : AmrapFlow()
-    data object Instructions : AmrapFlow()
-    data object Tracker : AmrapFlow()
-}
-
-class AmrapConfiguration(
-    activeTimeS: Long
-) : WorkoutConfiguration(
-    activeTimeS = activeTimeS,
-    restTimeS = 0,
-    rounds = 1,
-)
-
-@SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AmrapScreen(
@@ -111,10 +103,12 @@ fun AmrapScreen(
                             step = AmrapFlow.TimeConfig
                         }
                     }
+
                     AmrapFlow.TimeConfig -> {
                         AmrapConfiguration(
                             onConfirm = { selectedTime ->
-                                config = AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
+                                config =
+                                    AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
                                 step = if (false) {
                                     AmrapFlow.Tracker
                                 } else {
@@ -123,6 +117,7 @@ fun AmrapScreen(
                             }
                         )
                     }
+
                     AmrapFlow.Instructions -> {
                         AmrapInstructions {
                             /**
@@ -134,6 +129,7 @@ fun AmrapScreen(
                             step = AmrapFlow.Tracker
                         }
                     }
+
                     AmrapFlow.Tracker -> {
                         LaunchedEffect(Unit) {
                             viewModel.startExercise(ClockType.AMRAP, config)
@@ -376,7 +372,8 @@ internal fun AmrapSummary(
     workoutState: WorkoutState,
     onClose: () -> Unit,
 ) {
-    val duration = (workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0L).toMinutesAndSeconds()
+    val duration =
+        (workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0L).toMinutesAndSeconds()
     val roundCount = workoutState.exerciseLaps
     val calories = workoutState.workoutMetrics.calories
     val avgHeartRate = workoutState.workoutMetrics.heartRateAverage?.toInt()

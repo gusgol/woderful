@@ -51,7 +51,6 @@ import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
 import me.goldhardt.woderful.extensions.formatElapsedTime
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
-import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
@@ -62,7 +61,7 @@ import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.RoundsCounter
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.SummaryScreen
-import me.goldhardt.woderful.presentation.component.defaultSummarySections
+import me.goldhardt.woderful.presentation.component.toDefaultSummarySections
 import me.goldhardt.woderful.service.WorkoutState
 import kotlin.time.Duration.Companion.seconds
 
@@ -372,12 +371,7 @@ internal fun AmrapSummary(
     workoutState: WorkoutState,
     onClose: () -> Unit,
 ) {
-    val duration =
-        (workoutState.activeDurationCheckpoint?.getElapsedTimeMs() ?: 0L).toMinutesAndSeconds()
-    val roundCount = workoutState.exerciseLaps
-    val calories = workoutState.workoutMetrics.calories
-    val avgHeartRate = workoutState.workoutMetrics.heartRateAverage?.toInt()
-    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate), onClose)
+    SummaryScreen(workoutState.toDefaultSummarySections(), onClose)
 }
 
 internal enum class AmrapInstructionsStep {

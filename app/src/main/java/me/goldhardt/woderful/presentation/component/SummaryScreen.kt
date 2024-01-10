@@ -93,7 +93,7 @@ fun WorkoutState.toDefaultSummarySections(): List<SummarySection> {
     return defaultSummarySections(duration, roundCount, calories, avgHeartRate)
 }
 
-fun defaultSummarySections(
+private fun defaultSummarySections(
     duration: String,
     roundCount: Int?,
     calories: Double?,

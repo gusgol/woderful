@@ -72,7 +72,6 @@ import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.SummaryScreen
 import me.goldhardt.woderful.presentation.component.toDefaultSummarySections
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
-import me.goldhardt.woderful.service.ExerciseEvent
 import me.goldhardt.woderful.service.WorkoutState
 import kotlin.time.Duration.Companion.seconds
 
@@ -111,10 +110,6 @@ fun EmomScreen(
     var restDurationS by remember { mutableStateOf(0L) }
     var roundCount by remember { mutableStateOf(0) }
     var configuration by remember { mutableStateOf(WorkoutConfiguration(0, 0, 0)) }
-
-    if (uiState.workoutState?.exerciseEvent == ExerciseEvent.Milestone) {
-        viewModel.markLap()
-    }
 
     when (uiState.serviceState) {
         is ServiceState.Connected -> {

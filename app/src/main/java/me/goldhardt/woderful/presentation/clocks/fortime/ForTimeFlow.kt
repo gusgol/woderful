@@ -1,16 +1,10 @@
 package me.goldhardt.woderful.presentation.clocks.fortime
 
-import me.goldhardt.woderful.data.model.Workout
-
 internal sealed class ForTimeFlow {
 
-    object Permissions : ForTimeFlow()
+    data object Permissions : ForTimeFlow()
 
-    object TimeConfig : ForTimeFlow()
+    data object TimeConfig : ForTimeFlow()
 
-    object Tracker : ForTimeFlow()
-
-    class Summary(
-        val workout: Workout
-    ) : ForTimeFlow()
+    data object Tracker : ForTimeFlow()
 }

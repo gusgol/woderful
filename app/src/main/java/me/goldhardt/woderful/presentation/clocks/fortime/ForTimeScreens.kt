@@ -48,9 +48,7 @@ import kotlinx.coroutines.launch
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
-import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
-import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
@@ -59,7 +57,6 @@ import me.goldhardt.woderful.presentation.clocks.FakeExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
 import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
-import me.goldhardt.woderful.presentation.clocks.emom.toProperties
 import me.goldhardt.woderful.presentation.component.CircleContainer
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.INITIAL_PAGE
@@ -67,10 +64,9 @@ import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PAGE_COUNT
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.SummaryScreen
-import me.goldhardt.woderful.presentation.component.SummarySection
+import me.goldhardt.woderful.presentation.component.toDefaultSummarySections
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
-import me.goldhardt.woderful.service.ExerciseEvent
-import java.util.Date
+import me.goldhardt.woderful.service.WorkoutState
 
 @Composable
 fun ForTimeScreen(
@@ -94,46 +90,41 @@ fun ForTimeScreen(
             LaunchedEffect(Unit) {
                 viewModel.prepareExercise()
             }
-            when (step) {
-                ForTimeFlow.Permissions -> {
-                    ExercisePermissionsLauncher {
-                        step = ForTimeFlow.TimeConfig
-                    }
-                }
-
-                ForTimeFlow.TimeConfig -> {
-                    ForTimeTimeConfiguration(
-                        onConfirm = {
-                            config = ForTimeConfiguration(it.toSeconds())
-                            step = ForTimeFlow.Tracker
+            if (uiState.isEnded && uiState.workoutState != null) {
+                ForTimeSummary(
+                    workoutState = requireNotNull(uiState.workoutState),
+                    onClose = onClose,
+                )
+            } else {
+                when (step) {
+                    ForTimeFlow.Permissions -> {
+                        ExercisePermissionsLauncher {
+                            step = ForTimeFlow.TimeConfig
                         }
-                    )
-                }
-
-                ForTimeFlow.Tracker -> {
-                    LaunchedEffect(Unit) {
-                        viewModel.startExercise(ClockType.EMOM, config)
                     }
-                    ForTimeTracker(
-                        configuration = config,
-                        uiState = uiState,
-                    ) {
-                        with (viewModel) {
-                            endExercise()
-                            insertWorkout(it)
+
+                    ForTimeFlow.TimeConfig -> {
+                        ForTimeTimeConfiguration(
+                            onConfirm = {
+                                config = ForTimeConfiguration(it.toSeconds())
+                                step = ForTimeFlow.Tracker
+                            }
+                        )
+                    }
+
+                    ForTimeFlow.Tracker -> {
+                        LaunchedEffect(Unit) {
+                            viewModel.startExercise(ClockType.EMOM, config)
                         }
-                        step = ForTimeFlow.Summary(it)
+                        ForTimeTracker(
+                            configuration = config,
+                            uiState = uiState,
+                        ) {
+                            uiState.workoutState?.let {
+                                viewModel.endWorkout(it)
+                            }
+                        }
                     }
-                }
-
-                is ForTimeFlow.Summary -> {
-                    val workout = (step as ForTimeFlow.Summary).workout
-                    ForTimeSummary(
-                        duration = workout.durationMs.toMinutesAndSeconds(),
-                        calories = workout.calories,
-                        avgHeartRate = workout.avgHeartRate?.toInt(),
-                        onClose = onClose,
-                    )
                 }
             }
         }
@@ -159,7 +150,7 @@ internal fun ForTimeTimeConfiguration(
 internal fun ForTimeTracker(
     configuration: ForTimeConfiguration,
     uiState: WorkoutUiState,
-    onFinished: (Workout) -> Unit,
+    onFinished: () -> Unit,
 ) {
     val metrics = uiState.workoutState?.workoutMetrics
 
@@ -194,30 +185,10 @@ internal fun ForTimeTracker(
     )
     val coroutineScope = rememberCoroutineScope()
 
-    val finishWorkout: () -> Unit = {
-        onFinished(
-            Workout(
-                durationMs = elapsedTimeMs,
-                type = ClockType.FOR_TIME,
-                rounds = 0,
-                calories = metrics?.calories,
-                avgHeartRate = metrics?.heartRateAverage,
-                createdAt = Date().time,
-                properties = configuration.toProperties()
-            )
-        )
-    }
-
-    if (uiState.workoutState?.exerciseEvent == ExerciseEvent.TimeEnded) {
-        finishWorkout()
-    }
-
     StopWorkoutContainer(
         pagerState = pagerState,
         coroutineScope = coroutineScope,
-        onConfirm = {
-            finishWorkout()
-        }
+        onConfirm = onFinished
     ) {
         Box(
             modifier = Modifier
@@ -260,34 +231,10 @@ internal fun ForTimeTracker(
 
 @Composable
 internal fun ForTimeSummary(
-    duration: String,
-    calories: Double?,
-    avgHeartRate: Int?,
+    workoutState: WorkoutState,
     onClose: () -> Unit,
 ) {
-    val sections = mutableListOf(
-        SummarySection(
-            title = R.string.title_workout_duration,
-            value = duration,
-        )
-    )
-    if (calories != null) {
-        sections.add(
-            SummarySection(
-                title = R.string.title_calories,
-                value = String.format("%.2f", calories),
-            )
-        )
-    }
-    if (avgHeartRate != null && avgHeartRate > 0) {
-        sections.add(
-            SummarySection(
-                title = R.string.title_avg_heart_rate,
-                value = avgHeartRate.toString(),
-            )
-        )
-    }
-    SummaryScreen(sections, onClose)
+    SummaryScreen(workoutState.toDefaultSummarySections(), onClose)
 }
 
 @Composable

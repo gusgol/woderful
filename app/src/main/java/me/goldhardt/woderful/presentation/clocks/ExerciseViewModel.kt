@@ -66,7 +66,7 @@ class ExerciseViewModel @Inject constructor(
                 true,
                 false,
                 it,
-                (it as? ServiceState.Connected)?.workoutState
+                null
             )
         }
     )

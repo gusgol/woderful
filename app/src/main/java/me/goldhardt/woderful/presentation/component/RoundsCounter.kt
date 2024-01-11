@@ -13,7 +13,7 @@ import androidx.wear.compose.material.Text
 @Composable
 fun RoundsCounter(
     count: Int,
-    minimumRadius: Dp = 24.dp,
+    minimumRadius: Dp = 28.dp,
 ) {
     CircleContainer(
         minimumRadius = minimumRadius,

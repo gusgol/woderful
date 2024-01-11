@@ -49,19 +49,17 @@ import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
-import me.goldhardt.woderful.data.model.ClockProperties
 import me.goldhardt.woderful.data.model.ClockType
-import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
 import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
-import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.FakeExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.MinutesAndSecondsTimeConfiguration
+import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.component.CircleContainer
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
@@ -71,37 +69,10 @@ import me.goldhardt.woderful.presentation.component.PickerOptionText
 import me.goldhardt.woderful.presentation.component.RoundText
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.SummaryScreen
-import me.goldhardt.woderful.presentation.component.defaultSummarySections
+import me.goldhardt.woderful.presentation.component.toDefaultSummarySections
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
-import me.goldhardt.woderful.service.ExerciseEvent
-import java.util.Date
+import me.goldhardt.woderful.service.WorkoutState
 import kotlin.time.Duration.Companion.seconds
-
-/**
- * Represents the flow of the Emom workout configuration.
- */
-internal sealed class EmomFlow {
-    object Permissions : EmomFlow()
-    object TimeConfig : EmomFlow()
-    object RoundsConfig : EmomFlow()
-    object RestConfig : EmomFlow()
-    object Tracker : EmomFlow()
-    data class Summary(
-        val workout: Workout,
-        val configuration: WorkoutConfiguration,
-    ) : EmomFlow()
-}
-
-/**
- * Converts a [WorkoutConfiguration] to a map of properties.
- */
-fun WorkoutConfiguration.toProperties(): Map<String, Any> {
-    return mapOf(
-        ClockProperties.EMOM.CONFIG_ACTIVE_TIME_S to activeTimeS,
-        ClockProperties.EMOM.CONFIG_ROUNDS to rounds,
-        ClockProperties.EMOM.CONFIG_REST_TIME to restTimeS,
-    )
-}
 
 
 @Composable
@@ -125,62 +96,57 @@ fun EmomScreen(
     var roundDurationS by remember { mutableStateOf(0L) }
     var restDurationS by remember { mutableStateOf(0L) }
     var roundCount by remember { mutableStateOf(0) }
+    var configuration by remember { mutableStateOf(WorkoutConfiguration(0, 0, 0)) }
 
     when (uiState.serviceState) {
         is ServiceState.Connected -> {
-
             LaunchedEffect(Unit) {
                 viewModel.prepareExercise()
             }
 
-            when (step) {
-                EmomFlow.Permissions -> {
-                    ExercisePermissionsLauncher {
-                        step = EmomFlow.TimeConfig
-                    }
-                }
-                EmomFlow.TimeConfig -> EmomTimeConfiguration { minute, second ->
-                    roundDurationS = (minute * 60.seconds.inWholeSeconds) + second
-                    step = EmomFlow.RoundsConfig
-                }
-                EmomFlow.RoundsConfig -> EmomRoundsConfiguration {
-                    roundCount = it
-                    step = EmomFlow.RestConfig
-                }
-                EmomFlow.RestConfig -> EmomRestConfiguration { minute, second ->
-                    restDurationS = (minute * 60.seconds.inWholeSeconds) + second
-                    step = EmomFlow.Tracker
-                }
-                EmomFlow.Tracker -> {
-                    val config = WorkoutConfiguration(roundDurationS, restDurationS, roundCount)
-                    LaunchedEffect(Unit) {
-                        viewModel.startExercise(ClockType.EMOM, config)
-                    }
-                    EmomTracker(
-                        config,
-                        uiState = uiState,
-                        onFinished = { workout ->
-                            with (viewModel) {
-                                endExercise()
-                                insertWorkout(workout)
-                            }
-                            step = EmomFlow.Summary(workout, config)
+            if (uiState.isEnded && uiState.workoutState != null) {
+                EmomSummary(
+                    configuration = configuration,
+                    workoutState = requireNotNull(uiState.workoutState),
+                    onClose = onClose,
+                )
+            } else {
+                when (step) {
+                    EmomFlow.Permissions -> {
+                        ExercisePermissionsLauncher {
+                            step = EmomFlow.TimeConfig
                         }
-                    )
-                }
-                is EmomFlow.Summary -> {
-                    val summary = (step as EmomFlow.Summary)
-                    val workout = summary.workout
-                    EmomSummary(
-                        duration = workout.durationMs.toMinutesAndSeconds(),
-                        roundCount = workout.rounds,
-                        calories = workout.calories,
-                        avgHeartRate = workout.avgHeartRate?.toInt(),
-                        configuration = summary.configuration,
-                        onClose = onClose,
-                    )
+                    }
+                    EmomFlow.TimeConfig -> EmomTimeConfiguration { minute, second ->
+                        roundDurationS = (minute * 60.seconds.inWholeSeconds) + second
+                        step = EmomFlow.RoundsConfig
+                    }
+                    EmomFlow.RoundsConfig -> EmomRoundsConfiguration {
+                        roundCount = it
+                        step = EmomFlow.RestConfig
+                    }
+                    EmomFlow.RestConfig -> EmomRestConfiguration { minute, second ->
+                        restDurationS = (minute * 60.seconds.inWholeSeconds) + second
+                        step = EmomFlow.Tracker
+                    }
+                    EmomFlow.Tracker -> {
+                        configuration = WorkoutConfiguration(roundDurationS, restDurationS, roundCount)
+                        LaunchedEffect(Unit) {
+                            viewModel.startExercise(ClockType.EMOM, configuration)
+                        }
+                        EmomTracker(
+                            configuration,
+                            uiState = uiState,
+                            onFinished = {
+                                uiState.workoutState?.let {
+                                    viewModel.endWorkout(it)
+                                }
+                            }
+                        )
+                    }
                 }
             }
+
         }
         ServiceState.Disconnected -> {
             LoadingWorkout()
@@ -263,10 +229,10 @@ internal fun EmomRestConfiguration(
 @Composable
 internal fun EmomTracker(
     configuration: WorkoutConfiguration,
-    uiState: ExerciseScreenState,
-    onFinished: (Workout) -> Unit,
+    uiState: WorkoutUiState,
+    onFinished: () -> Unit,
 ) {
-    val metrics = uiState.exerciseState?.exerciseMetrics
+    val metrics = uiState.workoutState?.workoutMetrics
 
     val totalRoundTimeS = (configuration.activeTimeS + configuration.restTimeS).toFloat()
     val activeSegmentWeight = configuration.activeTimeS / totalRoundTimeS
@@ -295,7 +261,7 @@ internal fun EmomTracker(
     }
 
     var elapsedTimeMs by remember { mutableLongStateOf(0L) }
-    val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+    val activeDuration = uiState.workoutState?.activeDurationCheckpoint
     elapsedTimeMs = activeDuration?.getElapsedTimeMs() ?: elapsedTimeMs
 
     var progress by remember { mutableFloatStateOf(0F) }
@@ -316,28 +282,8 @@ internal fun EmomTracker(
 
     val completedRounds = (progress * configuration.rounds).toInt()
 
-    val finishWorkout: () -> Unit = {
-        onFinished(
-            Workout(
-                durationMs = elapsedTimeMs,
-                type = ClockType.EMOM,
-                rounds = completedRounds,
-                calories = metrics?.calories,
-                avgHeartRate = metrics?.heartRateAverage,
-                createdAt = Date().time,
-                properties = configuration.toProperties()
-            )
-        )
-    }
-
-    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
-        finishWorkout()
-    }
-
     StopWorkoutContainer(
-        onConfirm = {
-            finishWorkout()
-        }
+        onConfirm = onFinished,
     ) {
         Box(
             modifier = Modifier
@@ -389,22 +335,19 @@ internal fun EmomTracker(
 @Composable
 internal fun EmomSummary(
     configuration: WorkoutConfiguration,
-    duration: String,
-    roundCount: Int,
-    calories: Double?,
-    avgHeartRate: Int?,
+    workoutState: WorkoutState,
     onClose: () -> Unit = {},
 ) {
     val roundsDescription =
         "${configuration.rounds} ${pluralStringResource(id = R.plurals.message_rounds, count = configuration.rounds)}"
     val configurationSummary = stringResource(
         R.string.title_emom_summary_desc,
-        configuration.activeTimeS.toMinutesAndSeconds(),
+        configuration.activeTimeS.toInt().toMinutesAndSeconds(),
         roundsDescription,
-        configuration.restTimeS.toMinutesAndSeconds()
+        configuration.restTimeS.toInt().toMinutesAndSeconds()
     )
     SummaryScreen(
-        defaultSummarySections(duration, roundCount, calories, avgHeartRate),
+        workoutState.toDefaultSummarySections(),
         onClose = onClose,
         descriptionSlot = {
             Card(
@@ -475,20 +418,6 @@ fun EmomTrackerPreview() {
             configuration = WorkoutConfiguration(90, 4, 30),
             uiState = FakeExerciseScreenState(),
             onFinished = {}
-        )
-    }
-}
-
-@WearPreviewDevices
-@Composable
-fun EmomSummaryPreview() {
-    WODerfulTheme {
-        EmomSummary(
-            WorkoutConfiguration(80, 10, 20),
-            "12:00",
-            12,
-            120.0,
-            120
         )
     }
 }

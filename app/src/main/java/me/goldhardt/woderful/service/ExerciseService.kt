@@ -54,8 +54,8 @@ class ExerciseService : LifecycleService() {
             this.foregroundServiceType != ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE
         }
 
-    private val _exerciseServiceState = MutableStateFlow(ExerciseServiceState())
-    val exerciseServiceState: StateFlow<ExerciseServiceState> = _exerciseServiceState.asStateFlow()
+    private val _workoutState = MutableStateFlow(WorkoutState())
+    val workoutState: StateFlow<WorkoutState> = _workoutState.asStateFlow()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -75,9 +75,10 @@ class ExerciseService : LifecycleService() {
                                 processExerciseUpdate(it.exerciseUpdate)
 
                             is ExerciseInfo.LapSummaryInfo ->
-                                _exerciseServiceState.update { oldState ->
+                                _workoutState.update { oldState ->
                                     oldState.copy(
-                                        exerciseLaps = it.lapSummary.lapCount
+                                        exerciseLaps = it.lapSummary.lapCount,
+                                        exerciseEvent = ExerciseEvent.Lap
                                     )
                                 }
                         }
@@ -161,7 +162,7 @@ class ExerciseService : LifecycleService() {
     private fun stopSelfIfNotRunning() {
         lifecycleScope.launch {
             if (!isExerciseInProgress()) {
-                if (exerciseServiceState.value.exerciseState == ExerciseState.PREPARING) {
+                if (workoutState.value.exerciseState == ExerciseState.PREPARING) {
                     lifecycleScope.launch {
                         endExercise()
                     }
@@ -176,10 +177,10 @@ class ExerciseService : LifecycleService() {
             removeOngoingActivityNotification()
         }
 
-        _exerciseServiceState.update { old ->
+        _workoutState.update { old ->
             old.copy(
                 exerciseState = exerciseUpdate.exerciseStateInfo.state,
-                exerciseMetrics = old.exerciseMetrics.update(exerciseUpdate.latestMetrics),
+                workoutMetrics = old.workoutMetrics.update(exerciseUpdate.latestMetrics),
                 exerciseEvent = getExerciseEvent(exerciseUpdate),
                 activeDurationCheckpoint = exerciseUpdate.activeDurationCheckpoint
                     ?: old.activeDurationCheckpoint,
@@ -192,9 +193,9 @@ class ExerciseService : LifecycleService() {
         if (exerciseUpdate.latestAchievedGoals.isNotEmpty()) {
             ExerciseEvent.TimeEnded
         } else if (exerciseUpdate.latestMilestoneMarkerSummaries.isNotEmpty()) {
-            ExerciseEvent.Lap
+            ExerciseEvent.Milestone
         } else {
-            null
+            ExerciseEvent.Progress
         }
 
     private fun handleBind() {
@@ -211,7 +212,7 @@ class ExerciseService : LifecycleService() {
             Log.d(TAG, "Posting ongoing activity notification")
 
             exerciseNotificationManager.createNotificationChannel()
-            val serviceState = exerciseServiceState.value
+            val serviceState = workoutState.value
             startForeground(
                 ExerciseNotificationManager.NOTIFICATION_ID,
                 exerciseNotificationManager.buildNotification(
@@ -233,8 +234,8 @@ class ExerciseService : LifecycleService() {
     inner class LocalBinder : Binder() {
         fun getService() = this@ExerciseService
 
-        val exerciseServiceState: Flow<ExerciseServiceState>
-            get() = this@ExerciseService.exerciseServiceState
+        val workoutState: Flow<WorkoutState>
+            get() = this@ExerciseService.workoutState
     }
 
     companion object {

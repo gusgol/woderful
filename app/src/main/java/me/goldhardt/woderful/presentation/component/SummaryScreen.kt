@@ -21,7 +21,10 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import me.goldhardt.woderful.R
+import me.goldhardt.woderful.extensions.getElapsedTimeMs
+import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
+import me.goldhardt.woderful.service.WorkoutState
 
 @Composable
 fun SummaryScreen(
@@ -81,7 +84,16 @@ data class SummarySection(
     val value: String,
 )
 
-fun defaultSummarySections(
+fun WorkoutState.toDefaultSummarySections(): List<SummarySection> {
+    val duration =
+        (activeDurationCheckpoint?.getElapsedTimeMs() ?: 0L).toMinutesAndSeconds()
+    val roundCount = exerciseLaps
+    val calories = workoutMetrics.calories
+    val avgHeartRate = workoutMetrics.heartRateAverage?.toInt()
+    return defaultSummarySections(duration, roundCount, calories, avgHeartRate)
+}
+
+private fun defaultSummarySections(
     duration: String,
     roundCount: Int?,
     calories: Double?,

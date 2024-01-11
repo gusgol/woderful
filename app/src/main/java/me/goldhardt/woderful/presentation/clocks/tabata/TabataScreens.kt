@@ -45,16 +45,13 @@ import com.google.android.horologist.composables.SegmentedProgressIndicator
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.model.ClockType
-import me.goldhardt.woderful.data.model.Workout
-import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
-import me.goldhardt.woderful.extensions.toMinutesAndSeconds
 import me.goldhardt.woderful.extensions.toSeconds
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissions
 import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
-import me.goldhardt.woderful.presentation.clocks.ExerciseScreenState
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.FakeExerciseScreenState
+import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.clocks.emom.RoundMonitor
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
@@ -64,42 +61,12 @@ import me.goldhardt.woderful.presentation.component.PickerOptionText
 import me.goldhardt.woderful.presentation.component.RoundText
 import me.goldhardt.woderful.presentation.component.StopWorkoutContainer
 import me.goldhardt.woderful.presentation.component.SummaryScreen
-import me.goldhardt.woderful.presentation.component.defaultSummarySections
+import me.goldhardt.woderful.presentation.component.toDefaultSummarySections
 import me.goldhardt.woderful.presentation.theme.WODerfulTheme
-import me.goldhardt.woderful.service.ExerciseEvent
-import java.util.Date
-import kotlin.time.Duration.Companion.seconds
-
-/**
- *  To do's
- *
- *  1. Maybe extract round picker to its own component??
- */
-
-
-/**
- * The flow of screens for the Tabata clock type
- */
-internal sealed class TabataFlow {
-    object Permissions: TabataFlow()
-    object RoundsConfig : TabataFlow()
-    object Instructions : TabataFlow()
-    object Tracker : TabataFlow()
-    data class Summary(
-        val workout: Workout,
-    ) : TabataFlow()
-}
+import me.goldhardt.woderful.service.WorkoutState
 
 const val MAX_ROUNDS = 20
 const val INITIAL_OPTION = 4 - 1
-
-class TabataConfiguration(
-    rounds: Int,
-) : WorkoutConfiguration(
-    activeTimeS = 20.seconds.inWholeSeconds,
-    restTimeS = 10.seconds.inWholeSeconds,
-    rounds = rounds,
-)
 
 @Composable
 fun TabataScreen(
@@ -120,45 +87,40 @@ fun TabataScreen(
 
     when (uiState.serviceState) {
         is ServiceState.Connected -> {
-            when (step) {
-                TabataFlow.Permissions -> {
-                    ExercisePermissionsLauncher {
-                        step = TabataFlow.RoundsConfig
-                    }
-                }
-                TabataFlow.RoundsConfig -> {
-                    TabataRoundsConfig { selectedRounds ->
-                        config = TabataConfiguration(selectedRounds)
-                        step = TabataFlow.Instructions
-                    }
-                }
-                TabataFlow.Instructions -> {
-                    TabataInstructions {
-                        viewModel.startExercise(ClockType.TABATA, config)
-                        step = TabataFlow.Tracker
-                    }
-                }
-                TabataFlow.Tracker -> {
-                    TabataTracker(
-                        configuration = config,
-                        uiState = uiState
-                    ) {
-                        with(viewModel) {
-                            insertWorkout(it)
-                            endExercise()
+            if (uiState.isEnded && uiState.workoutState != null) {
+                TabataSummary(
+                    workoutState = requireNotNull(uiState.workoutState),
+                    onClose = onClose,
+                )
+            } else {
+                when (step) {
+                    TabataFlow.Permissions -> {
+                        ExercisePermissionsLauncher {
+                            step = TabataFlow.RoundsConfig
                         }
-                        step = TabataFlow.Summary(it)
                     }
-                }
-                is TabataFlow.Summary -> {
-                    val workout = (step as TabataFlow.Summary).workout
-                    TabataSummary(
-                        duration = workout.durationMs.toMinutesAndSeconds(),
-                        roundCount = workout.rounds,
-                        calories = workout.calories,
-                        avgHeartRate = workout.avgHeartRate?.toInt(),
-                        onClose = onClose,
-                    )
+                    TabataFlow.RoundsConfig -> {
+                        TabataRoundsConfig { selectedRounds ->
+                            config = TabataConfiguration(selectedRounds)
+                            step = TabataFlow.Instructions
+                        }
+                    }
+                    TabataFlow.Instructions -> {
+                        TabataInstructions {
+                            viewModel.startExercise(ClockType.TABATA, config)
+                            step = TabataFlow.Tracker
+                        }
+                    }
+                    TabataFlow.Tracker -> {
+                        TabataTracker(
+                            configuration = config,
+                            uiState = uiState
+                        ) {
+                            uiState.workoutState?.let {
+                                viewModel.endWorkout(it)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -246,10 +208,10 @@ fun TabataInstructions(
 @Composable
 internal fun TabataTracker(
     configuration: TabataConfiguration,
-    uiState: ExerciseScreenState,
-    onFinished: (Workout) -> Unit,
+    uiState: WorkoutUiState,
+    onFinished: () -> Unit,
 ) {
-    val metrics = uiState.exerciseState?.exerciseMetrics
+    val metrics = uiState.workoutState?.workoutMetrics
 
     val roundTimeMs = (configuration.activeTimeS + configuration.restTimeS).toFloat()
     val activeSegmentWeight = configuration.activeTimeS / roundTimeMs
@@ -263,7 +225,7 @@ internal fun TabataTracker(
             ProgressIndicatorSegment(
                 weight = activeSegmentWeight,
                 indicatorColor = elapsedSegmentColor,
-                trackColor = MaterialTheme.colors.secondary
+                trackColor = MaterialTheme.colors.primary
             )
         )
         segments.add(
@@ -276,7 +238,7 @@ internal fun TabataTracker(
     }
 
     var elapsedTimeMs by remember { mutableLongStateOf(0L) }
-    val activeDuration = uiState.exerciseState?.activeDurationCheckpoint
+    val activeDuration = uiState.workoutState?.activeDurationCheckpoint
     elapsedTimeMs = activeDuration?.getElapsedTimeMs() ?: elapsedTimeMs
 
     var progress by remember { mutableFloatStateOf(0F) }
@@ -297,27 +259,8 @@ internal fun TabataTracker(
 
     val completedRounds = (progress * configuration.rounds).toInt()
 
-    val finishWorkout = {
-        onFinished(
-            Workout(
-                durationMs = elapsedTimeMs,
-                type = ClockType.TABATA,
-                rounds = completedRounds,
-                calories = metrics?.calories,
-                avgHeartRate = metrics?.heartRateAverage,
-                createdAt = Date().time,
-            )
-        )
-    }
-
-    if (uiState.exerciseState?.exerciseEvent == ExerciseEvent.TimeEnded) {
-        finishWorkout()
-    }
-
     StopWorkoutContainer(
-        onConfirm = {
-            finishWorkout()
-        },
+        onConfirm = onFinished,
     ) {
         Box(
             modifier = Modifier
@@ -368,13 +311,10 @@ internal fun TabataTracker(
 
 @Composable
 internal fun TabataSummary(
-    duration: String,
-    roundCount: Int,
-    calories: Double?,
-    avgHeartRate: Int?,
+    workoutState: WorkoutState,
     onClose: () -> Unit,
 ) {
-    SummaryScreen(defaultSummarySections(duration, roundCount, calories, avgHeartRate), onClose)
+    SummaryScreen(workoutState.toDefaultSummarySections(), onClose)
 }
 
 @WearPreviewDevices

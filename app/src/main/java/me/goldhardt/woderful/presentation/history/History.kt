@@ -146,8 +146,8 @@ fun HistoryItem(
                     )
                 }
             }
-            if (item.properties != null && item.type == ClockType.EMOM) {
-                EmomProperties(item.properties)
+            if (item.properties != null) {
+                item.type.getDetailsComposable(item.properties).invoke()
             }
         }
     }
@@ -155,9 +155,9 @@ fun HistoryItem(
 
 @Composable
 internal fun EmomProperties(properties: Map<String, Any>) {
-    val activeTime = properties[ClockProperties.EMOM.CONFIG_ACTIVE_TIME_S] as? Double
-    val roundCount = properties[ClockProperties.EMOM.CONFIG_ROUNDS] as? Double
-    val restTime = properties[ClockProperties.EMOM.CONFIG_REST_TIME] as? Double
+    val activeTime = properties[ClockProperties.Configuration.CONFIG_ACTIVE_TIME_S] as? Double
+    val roundCount = properties[ClockProperties.Configuration.CONFIG_ROUNDS] as? Double
+    val restTime = properties[ClockProperties.Configuration.CONFIG_REST_TIME] as? Double
 
     if (activeTime != null && roundCount != null && restTime != null) {
         val roundsDescription =

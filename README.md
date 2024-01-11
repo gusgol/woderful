@@ -8,6 +8,7 @@
 - [ ] Limit the number of sections (check limit).
 - [ ] Extract round picker to its own component.
 - [ ] "Reset" exercise. 
+- [ ] processExerciseUpdate keeps running after service is initiated
 
 ### Tabata
 - [ ] Change init message.

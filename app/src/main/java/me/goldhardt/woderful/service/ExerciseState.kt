@@ -31,6 +31,7 @@ data class WorkoutState(
 
 sealed interface ExerciseEvent{
     data object Progress : ExerciseEvent
+    data object Lap : ExerciseEvent
     data object Milestone : ExerciseEvent
     data object TimeEnded : ExerciseEvent
 }

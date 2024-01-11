@@ -77,7 +77,8 @@ class ExerciseService : LifecycleService() {
                             is ExerciseInfo.LapSummaryInfo ->
                                 _workoutState.update { oldState ->
                                     oldState.copy(
-                                        exerciseLaps = it.lapSummary.lapCount
+                                        exerciseLaps = it.lapSummary.lapCount,
+                                        exerciseEvent = ExerciseEvent.Lap
                                     )
                                 }
                         }

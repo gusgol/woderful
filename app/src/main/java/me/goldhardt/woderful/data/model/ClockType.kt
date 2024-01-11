@@ -5,30 +5,35 @@ import kotlin.time.Duration.Companion.seconds
 
 enum class ClockType(
     val displayName: Int,
-    val image: Int
+    val image: Int,
+    val roundBehavior: RoundBehavior
 ) : ClockMilestone {
 
-    AMRAP(R.string.amrap, R.drawable.img_wod_1) {
+    AMRAP(R.string.amrap, R.drawable.img_wod_1, RoundBehavior.User) {
         override fun getThresholdS(configuration: WorkoutConfiguration): Long {
             return 60.seconds.inWholeSeconds
         }
     },
 
-    EMOM(R.string.emom, R.drawable.img_wod_2) {
+    EMOM(R.string.emom, R.drawable.img_wod_2, RoundBehavior.Time) {
         override fun getThresholdS(configuration: WorkoutConfiguration): Long {
             return configuration.activeTimeS + configuration.restTimeS
         }
     },
 
-    TABATA(R.string.tabata, R.drawable.img_wod_3) {
+    TABATA(R.string.tabata, R.drawable.img_wod_3, RoundBehavior.Time) {
         override fun getThresholdS(configuration: WorkoutConfiguration): Long {
             return configuration.activeTimeS + configuration.restTimeS
         }
     },
 
-    FOR_TIME(R.string.for_time, R.drawable.img_wod_4) {
+    FOR_TIME(R.string.for_time, R.drawable.img_wod_4, RoundBehavior.User) {
         override fun getThresholdS(configuration: WorkoutConfiguration): Long {
             return 60.seconds.inWholeSeconds
         }
     },
+}
+
+enum class RoundBehavior {
+    Time, User
 }

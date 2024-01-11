@@ -13,6 +13,7 @@ import me.goldhardt.woderful.data.HealthServicesRepository
 import me.goldhardt.woderful.data.ServiceState
 import me.goldhardt.woderful.data.local.UserPreferencesRepository
 import me.goldhardt.woderful.data.model.ClockType
+import me.goldhardt.woderful.data.model.RoundBehavior
 import me.goldhardt.woderful.data.model.Workout
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
@@ -50,9 +51,11 @@ class ExerciseViewModel @Inject constructor(
     }.onEach {
         when (it.workoutState?.exerciseEvent) {
             ExerciseEvent.Milestone -> {
+                markLapIfRequired()
                 vibrate()
             }
             ExerciseEvent.TimeEnded -> {
+                markLapIfRequired()
                 endWorkout(it.workoutState)
                 vibrate()
             }
@@ -157,5 +160,11 @@ class ExerciseViewModel @Inject constructor(
             avgHeartRate = workoutState.workoutMetrics.heartRateAverage,
             properties = configuration?.toProperties() ?: emptyMap()
         )
+    }
+
+    private fun markLapIfRequired() {
+        if (clockType?.roundBehavior == RoundBehavior.Time) {
+            markLap()
+        }
     }
 }

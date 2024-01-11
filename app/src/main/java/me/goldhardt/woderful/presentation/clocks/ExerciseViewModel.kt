@@ -19,7 +19,7 @@ import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.domain.InsertWorkoutUseCase
 import me.goldhardt.woderful.domain.VibrateUseCase
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
-import me.goldhardt.woderful.presentation.clocks.emom.toProperties
+import me.goldhardt.woderful.extensions.toProperties
 import me.goldhardt.woderful.service.ExerciseEvent
 import me.goldhardt.woderful.service.WorkoutState
 import java.util.Date

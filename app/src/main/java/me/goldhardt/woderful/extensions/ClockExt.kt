@@ -5,6 +5,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.health.services.client.data.ExerciseUpdate
 import androidx.wear.compose.material.MaterialTheme
+import me.goldhardt.woderful.data.model.ClockProperties
+import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.util.Date
@@ -85,4 +87,16 @@ fun Long.formatDate(): String {
  */
 fun ExerciseUpdate.ActiveDurationCheckpoint.getElapsedTimeMs(): Long {
     return (System.currentTimeMillis() - time.toEpochMilli()) + activeDuration.toMillis()
+}
+
+
+/**
+ * Converts a [WorkoutConfiguration] to a map of properties.
+ */
+fun WorkoutConfiguration.toProperties(): Map<String, Any> {
+    return mapOf(
+        ClockProperties.Configuration.CONFIG_ACTIVE_TIME_S to activeTimeS,
+        ClockProperties.Configuration.CONFIG_ROUNDS to rounds,
+        ClockProperties.Configuration.CONFIG_REST_TIME to restTimeS,
+    )
 }

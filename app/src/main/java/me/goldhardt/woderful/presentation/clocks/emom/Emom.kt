@@ -49,7 +49,6 @@ import com.google.android.horologist.composables.ProgressIndicatorSegment
 import com.google.android.horologist.composables.SegmentedProgressIndicator
 import me.goldhardt.woderful.R
 import me.goldhardt.woderful.data.ServiceState
-import me.goldhardt.woderful.data.model.ClockProperties
 import me.goldhardt.woderful.data.model.ClockType
 import me.goldhardt.woderful.data.model.WorkoutConfiguration
 import me.goldhardt.woderful.extensions.getElapsedTimeMs
@@ -75,18 +74,6 @@ import me.goldhardt.woderful.presentation.theme.WODerfulTheme
 import me.goldhardt.woderful.service.WorkoutState
 import kotlin.time.Duration.Companion.seconds
 
-
-
-/**
- * Converts a [WorkoutConfiguration] to a map of properties.
- */
-fun WorkoutConfiguration.toProperties(): Map<String, Any> {
-    return mapOf(
-        ClockProperties.EMOM.CONFIG_ACTIVE_TIME_S to activeTimeS,
-        ClockProperties.EMOM.CONFIG_ROUNDS to rounds,
-        ClockProperties.EMOM.CONFIG_REST_TIME to restTimeS,
-    )
-}
 
 @Composable
 fun EmomScreen(

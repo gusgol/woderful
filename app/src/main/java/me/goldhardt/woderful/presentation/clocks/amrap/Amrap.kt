@@ -108,7 +108,7 @@ fun AmrapScreen(
                             onConfirm = { selectedTime ->
                                 config =
                                     AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
-                                step = if (false) {
+                                step = if (viewModel.hasShownCounterInstructions) {
                                     AmrapFlow.Tracker
                                 } else {
                                     AmrapFlow.Instructions

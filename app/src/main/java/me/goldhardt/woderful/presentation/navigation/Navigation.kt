@@ -23,7 +23,7 @@ object WODerfulScreens {
     const val HOME = "home"
 
     // Clock types
-    private const val CLOCK = "clock"
+    internal const val CLOCK = "clock"
     const val AMRAP = "$CLOCK/amrap"
     const val EMOM = "$CLOCK/emom"
     const val TABATA = "$CLOCK/tabata"
@@ -31,7 +31,6 @@ object WODerfulScreens {
 
     // More Options
     const val HISTORY = "history"
-
 }
 
 @Composable

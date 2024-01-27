@@ -20,6 +20,7 @@ import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.navigation.currentBackStackEntryAsState
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
+import com.google.android.horologist.compose.ambient.AmbientAware
 import dagger.hilt.android.AndroidEntryPoint
 import me.goldhardt.woderful.presentation.navigation.MainNavigation
 import me.goldhardt.woderful.presentation.navigation.WODerfulScreens.HOME
@@ -42,26 +43,28 @@ fun WearApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    WODerfulTheme {
-        Scaffold(
-            timeText = {
-                if (!listState.isScrollInProgress && currentDestination?.route == HOME) {
-                    TimeText()
+    AmbientAware {
+        WODerfulTheme {
+            Scaffold(
+                timeText = {
+                    if (!listState.isScrollInProgress && currentDestination?.route == HOME) {
+                        TimeText()
+                    }
+                },
+                vignette = {
+                    Vignette(vignettePosition = VignettePosition.TopAndBottom)
+                },
+                positionIndicator = {
+                    PositionIndicator(
+                        scalingLazyListState = listState
+                    )
                 }
-            },
-            vignette = {
-                Vignette(vignettePosition = VignettePosition.TopAndBottom)
-            },
-            positionIndicator = {
-                PositionIndicator(
-                    scalingLazyListState = listState
+            ) {
+                MainNavigation(
+                    listState = listState,
+                    navController = navController
                 )
             }
-        ) {
-            MainNavigation(
-                listState = listState,
-                navController = navController
-            )
         }
     }
 }

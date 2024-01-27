@@ -12,7 +12,7 @@ datastore-prefereces = "1.0.0"
 health-services = "1.0.0-rc01"
 hilt = "2.46.1"
 hilt-navigation-compose = "1.0.0"
-horologist = "0.5.14"
+horologist = "0.5.16"
 kotlin = "1.9.21"
 legacy-support-v4 = "1.0.0"
 lifecycle-runtime-compose = "2.6.2"
@@ -44,6 +44,7 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
 horologist-composables = { module = "com.google.android.horologist:horologist-composables", version.ref = "horologist" }
+horologist-compose-layout = { module = "com.google.android.horologist:horologist-compose-layout", version.ref = "horologist" }
 horologist-compose-tools = { module = "com.google.android.horologist:horologist-compose-tools", version.ref = "horologist" }
 horologist-health-composables = { module = "com.google.android.horologist:horologist-health-composables", version.ref = "horologist" }
 horologist-health-service = { module = "com.google.android.horologist:horologist-health-service", version.ref = "horologist" }

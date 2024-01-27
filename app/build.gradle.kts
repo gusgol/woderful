@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.horologist.tiles)
     implementation(libs.horologist.health.composables)
     implementation(libs.horologist.health.service)
+    implementation(libs.horologist.compose.layout)
 
     // Material
     implementation(libs.compose.material.base)

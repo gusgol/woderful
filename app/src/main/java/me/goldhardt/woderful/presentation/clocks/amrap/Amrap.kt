@@ -56,6 +56,7 @@ import me.goldhardt.woderful.presentation.clocks.ExercisePermissionsLauncher
 import me.goldhardt.woderful.presentation.clocks.ExerciseViewModel
 import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
 import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
+import me.goldhardt.woderful.presentation.component.CountdownScreen
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.RoundsCounter
@@ -109,7 +110,7 @@ fun AmrapScreen(
                                 config =
                                     AmrapConfiguration(selectedTime * 60.seconds.inWholeSeconds)
                                 step = if (viewModel.hasShownCounterInstructions) {
-                                    AmrapFlow.Tracker
+                                    AmrapFlow.Countdown
                                 } else {
                                     AmrapFlow.Instructions
                                 }
@@ -125,6 +126,12 @@ fun AmrapScreen(
                              */
                             viewModel.onCounterInstructionsShown()
 
+                            step = AmrapFlow.Countdown
+                        }
+                    }
+
+                    AmrapFlow.Countdown -> {
+                        CountdownScreen {
                             step = AmrapFlow.Tracker
                         }
                     }

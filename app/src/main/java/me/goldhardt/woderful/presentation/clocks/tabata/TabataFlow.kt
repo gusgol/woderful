@@ -7,5 +7,6 @@ internal sealed class TabataFlow {
     data object Permissions: TabataFlow()
     data object RoundsConfig : TabataFlow()
     data object Instructions : TabataFlow()
+    data object Countdown : TabataFlow()
     data object Tracker : TabataFlow()
 }

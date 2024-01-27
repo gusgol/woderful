@@ -55,6 +55,7 @@ import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.clocks.emom.RoundMonitor
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
+import me.goldhardt.woderful.presentation.component.CountdownScreen
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
@@ -108,6 +109,11 @@ fun TabataScreen(
                     TabataFlow.Instructions -> {
                         TabataInstructions {
                             viewModel.startExercise(ClockType.TABATA, config)
+                            step = TabataFlow.Countdown
+                        }
+                    }
+                    TabataFlow.Countdown -> {
+                        CountdownScreen() {
                             step = TabataFlow.Tracker
                         }
                     }

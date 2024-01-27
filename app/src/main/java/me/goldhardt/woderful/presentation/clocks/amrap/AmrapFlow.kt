@@ -7,5 +7,6 @@ internal sealed class AmrapFlow {
     data object Permissions: AmrapFlow()
     data object TimeConfig : AmrapFlow()
     data object Instructions : AmrapFlow()
+    data object Countdown : AmrapFlow()
     data object Tracker : AmrapFlow()
 }

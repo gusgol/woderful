@@ -63,6 +63,7 @@ import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.component.CircleContainer
 import me.goldhardt.woderful.presentation.component.ConfigurationButton
+import me.goldhardt.woderful.presentation.component.CountdownScreen
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
 import me.goldhardt.woderful.presentation.component.PickerOptionText
@@ -127,7 +128,12 @@ fun EmomScreen(
                     }
                     EmomFlow.RestConfig -> EmomRestConfiguration { minute, second ->
                         restDurationS = (minute * 60.seconds.inWholeSeconds) + second
-                        step = EmomFlow.Tracker
+                        step = EmomFlow.Countdown
+                    }
+                    EmomFlow.Countdown -> {
+                        CountdownScreen {
+                            step = EmomFlow.Tracker
+                        }
                     }
                     EmomFlow.Tracker -> {
                         configuration = WorkoutConfiguration(roundDurationS, restDurationS, roundCount)

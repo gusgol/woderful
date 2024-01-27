@@ -8,5 +8,6 @@ internal sealed class EmomFlow {
     data object TimeConfig : EmomFlow()
     data object RoundsConfig : EmomFlow()
     data object RestConfig : EmomFlow()
+    data object Countdown : EmomFlow()
     data object Tracker : EmomFlow()
 }

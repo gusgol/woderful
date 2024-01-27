@@ -58,6 +58,7 @@ import me.goldhardt.woderful.presentation.clocks.MinutesTimeConfiguration
 import me.goldhardt.woderful.presentation.clocks.WorkoutUiState
 import me.goldhardt.woderful.presentation.clocks.amrap.Duration
 import me.goldhardt.woderful.presentation.component.CircleContainer
+import me.goldhardt.woderful.presentation.component.CountdownScreen
 import me.goldhardt.woderful.presentation.component.HeartRateMonitor
 import me.goldhardt.woderful.presentation.component.INITIAL_PAGE
 import me.goldhardt.woderful.presentation.component.LoadingWorkout
@@ -107,9 +108,15 @@ fun ForTimeScreen(
                         ForTimeTimeConfiguration(
                             onConfirm = {
                                 config = ForTimeConfiguration(it.toSeconds())
-                                step = ForTimeFlow.Tracker
+                                step = ForTimeFlow.Countdown
                             }
                         )
+                    }
+
+                    ForTimeFlow.Countdown -> {
+                        CountdownScreen() {
+                            step = ForTimeFlow.Tracker
+                        }
                     }
 
                     ForTimeFlow.Tracker -> {

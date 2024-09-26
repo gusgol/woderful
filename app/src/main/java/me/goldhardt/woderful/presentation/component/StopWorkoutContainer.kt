@@ -66,7 +66,7 @@ fun StopWorkoutContainer(
 
     HorizontalPager(
         state = pagerState, modifier = Modifier.fillMaxSize(),
-        beyondBoundsPageCount = NUMBER_OF_PAGES
+        beyondViewportPageCount = NUMBER_OF_PAGES
     ) { page ->
         if (page == 0) {
             ConfirmationScreen(onConfirm) {

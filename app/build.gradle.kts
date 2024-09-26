@@ -30,6 +30,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -57,6 +58,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.navigation.runtime.ktx)
     implementation(libs.guava)
+    coreLibraryDesugaring(libs.android.desugar)
 
     // Compose
     implementation(platform(libs.compose.bom))
@@ -104,7 +106,7 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
     annotationProcessor(libs.room.compiler)
-     kapt(libs.room.compiler)
+    kapt(libs.room.compiler)
 
     // Paging
     implementation(libs.paging.runtime.ktx)

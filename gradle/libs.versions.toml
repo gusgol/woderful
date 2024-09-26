@@ -1,30 +1,31 @@
 [versions]
-activity-compose = "1.7.2"
-accompanist = "0.28.0"
-agp = "8.2.0"
-compose = "1.3.1"
-compose-bom = "2022.10.00"
-compose-material-base = "1.5.0-beta02"
-compose-ui = "1.6.0-SNAPSHOT"
-concurrent-futures-ktx = "1.1.0"
-core-ktx = "1.12.0"
-datastore-prefereces = "1.0.0"
-health-services = "1.0.0-rc01"
-hilt = "2.46.1"
-hilt-navigation-compose = "1.0.0"
-horologist = "0.5.16"
+activity-compose = "1.9.2"
+accompanist = "0.34.0"
+agp = "8.2.2"
+compose = "1.7.2"
+compose-bom = "2024.09.02"
+compose-material-base = "1.7.2"
+compose-ui = "1.7.2"
+concurrent-futures-ktx = "1.2.0"
+core-ktx = "1.13.1"
+datastore-prefereces = "1.1.1"
+health-services = "1.0.0-rc02"
+hilt = "2.52"
+hilt-navigation-compose = "1.2.0"
+horologist = "0.5.28"
 kotlin = "1.9.21"
 legacy-support-v4 = "1.0.0"
-lifecycle-runtime-compose = "2.6.2"
-lifecycle-runtime-ktx = "2.6.1"
-lifecycle-viewmodel-ktx = "2.6.1"
+lifecycle-runtime-compose = "2.8.6"
+lifecycle-runtime-ktx = "2.8.6"
+lifecycle-viewmodel-ktx = "2.8.6"
 moshi = "1.14.0"
-navigation-runtime-ktx = "2.6.0"
-paging = "3.1.1"
-paging-compose = "3.2.0"
-playservices-wearable = "18.1.0"
-room = "2.5.2"
-wear-compose = "1.3.0-alpha01"
+navigation-runtime-ktx = "2.8.1"
+paging = "3.3.2"
+paging-compose = "3.3.2"
+playservices-wearable = "18.2.0"
+room = "2.6.1"
+wear-compose = "1.4.0"
+androidDesugarJdkLibs = "2.1.2"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
@@ -38,7 +39,7 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 concurrent-futures-ktx = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrent-futures-ktx" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore-prefereces" }
-guava = "com.google.guava:guava:31.0.1-android"
+guava = "com.google.guava:guava:33.3.1-android"
 health-services-client = { module = "androidx.health:health-services-client", version.ref = "health-services" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
@@ -70,6 +71,7 @@ wear-foundation = { module = "androidx.wear.compose:compose-foundation", version
 wear-material = { module = "androidx.wear.compose:compose-material", version.ref = "wear-compose" }
 wear-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear-compose" }
 wear-ongoing = "androidx.wear:wear-ongoing:1.0.0"
+android-desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
 
 [plugins]
 android = { id = "com.android.application", version.ref = "agp" }

@@ -3,7 +3,6 @@ package me.goldhardt.woderful.presentation.clocks.fortime
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -252,8 +250,14 @@ internal fun EndWorkout(
     CircleContainer(
         radius = radius,
         modifier = Modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = rememberRipple(bounded = false),
+            /**
+             * TODO  rememberRipple has been deprecated - it returns an old Indication
+             * implementation that is not compatible with the new Indication APIs that
+             * provide notable performance improvements. Instead, use the new ripple APIs
+             * provided by design system libraries, such as material and material3.
+             */
+//            interactionSource = remember { MutableInteractionSource() },
+//            indication = rememberRipple(bounded = false), //
             onClick = onClick
         )
     ) {
